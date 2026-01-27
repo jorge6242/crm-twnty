@@ -54,3 +54,6 @@ TRANSLATION_QA_REPORT.md
 packages/*/.yarn/releases/
 # avoid duplicating readme images (kept in docs)
 packages/twenty-website/public/images/readme/
+
+# ignore yarn releases
+.yarn/releases/
