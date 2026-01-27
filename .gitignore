@@ -49,3 +49,8 @@ dump.rdb
 mcp.json
 /.junie/
 TRANSLATION_QA_REPORT.md
+
+# ignore package-local yarn releases
+packages/*/.yarn/releases/
+# avoid duplicating readme images (kept in docs)
+packages/twenty-website/public/images/readme/

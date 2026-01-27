@@ -16,6 +16,7 @@ import {
 import { Authorize } from '~/pages/auth/Authorize';
 import { PasswordReset } from '~/pages/auth/PasswordReset';
 import { SignInUp } from '~/pages/auth/SignInUp';
+import { UnipileContactsReview } from '~/pages/integrations/UnipileContactsReview';
 import { NotFound } from '~/pages/not-found/NotFound';
 import { RecordIndexPage } from '~/pages/object-record/RecordIndexPage';
 import { RecordShowPage } from '~/pages/object-record/RecordShowPage';
@@ -63,6 +64,7 @@ export const useCreateAppRouter = (
           <Route path={indexAppPath.getIndexAppPath()} element={<></>} />
           <Route path={AppPath.RecordIndexPage} element={<RecordIndexPage />} />
           <Route path={AppPath.RecordShowPage} element={<RecordShowPage />} />
+          <Route path="/integrations/unipile/contacts" element={<UnipileContactsReview />} />
           <Route
             path={AppPath.SettingsCatchAll}
             element={
