@@ -56,7 +56,6 @@ packages/*/.yarn/releases/
 packages/twenty-website/public/images/readme/
 
 # ignore yarn releases
-.yarn/releases/
 
 # ignore docs and heavy website images
 packages/twenty-docs/images/
