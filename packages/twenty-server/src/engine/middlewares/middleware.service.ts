@@ -16,8 +16,8 @@ import { WorkspaceManyOrAllFlatEntityMapsCacheService } from 'src/engine/metadat
 import { INTERNAL_SERVER_ERROR } from 'src/engine/middlewares/constants/default-error-message.constant';
 import { bindDataToRequestObject } from 'src/engine/utils/bind-data-to-request-object.util';
 import {
-  handleException,
-  handleExceptionAndConvertToGraphQLError,
+    handleException,
+    handleExceptionAndConvertToGraphQLError,
 } from 'src/engine/utils/global-exception-handler.util';
 import { WorkspaceCacheStorageService } from 'src/engine/workspace-cache-storage/workspace-cache-storage.service';
 import { type CustomException } from 'src/utils/custom-exception';
@@ -42,24 +42,61 @@ export class MiddlewareService {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public writeRestResponseOnExceptionCaught(res: Response, error: any) {
     const statusCode = this.getStatus(error);
+    // capture and handle custom exceptions (defensive)
+    try {
+      handleException({
+        exception: error as CustomException,
+        exceptionHandlerService: this.exceptionHandlerService,
+        statusCode,
+      });
+    } catch (handlerErr) {
+      // ensure we log any errors from the exception handler itself
+      // eslint-disable-next-line no-console
+      console.error('Exception handler failed while processing error:', handlerErr);
+    }
 
-    // capture and handle custom exceptions
-    handleException({
-      exception: error as CustomException,
-      exceptionHandlerService: this.exceptionHandlerService,
+    // Always log the original error server-side to aid debugging
+    // eslint-disable-next-line no-console
+    console.error('REST error caught by MiddlewareService:', {
       statusCode,
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack,
     });
 
-    res.writeHead(statusCode, { 'Content-Type': 'application/json' });
-    res.write(
-      JSON.stringify({
+    // Build a safe response body with fallbacks in case stringify fails
+    let body: string;
+    try {
+      body = JSON.stringify({
         statusCode,
         messages: [error?.message || INTERNAL_SERVER_ERROR],
         error: error?.code || ErrorCode.INTERNAL_SERVER_ERROR,
-      }),
-    );
+      });
+    } catch (stringifyErr) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to stringify error response body:', stringifyErr);
+      body = JSON.stringify({
+        statusCode,
+        messages: [INTERNAL_SERVER_ERROR],
+        error: ErrorCode.INTERNAL_SERVER_ERROR,
+      });
+    }
 
-    res.end();
+    try {
+      res.writeHead(statusCode, { 'Content-Type': 'application/json' });
+      res.write(body);
+      res.end();
+    } catch (resErr) {
+      // Final fallback: log and attempt to end response
+      // eslint-disable-next-line no-console
+      console.error('Failed to write REST error response:', resErr);
+      try {
+        res.statusCode = statusCode;
+        res.end();
+      } catch (_) {
+        // ignore
+      }
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -8,7 +8,7 @@ export class UnipileWebhookController {
   @Get('hello')
   getHello() {
     console.log('flag');
-    return this.unipileService.getHello();
+    return 'flag';
   }
 
   // test webhook endpoint — just echoes back minimal ack

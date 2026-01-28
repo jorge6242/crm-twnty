@@ -1,0 +1,2 @@
+export const UNIPILE_API_KEY = 'UNIPILE_API_KEY';
+export const UNIPILE_BASE_URL = 'UNIPILE_BASE_URL';

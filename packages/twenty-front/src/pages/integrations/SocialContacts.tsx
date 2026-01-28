@@ -1,13 +1,11 @@
 import { gql, useApolloClient } from '@apollo/client';
 import styled from '@emotion/styled';
 import { useEffect, useState } from 'react';
+import LinkedInConnectForm from './LinkedInConnectForm';
 
-// API keys must NOT be stored in frontend code. The backend proxies Unipile calls.
-
-
-const UNIPILE_HELLO = gql`
-  query UnipileHello {
-    hello @rest(type: "Hello", path: "/integrations/unipile/hello") {
+const SOCIAL_HELLO = gql`
+  query SocialHello {
+    hello @rest(type: "Hello", path: "/integrations/social-contacts/hello") {
       message
     }
   }
@@ -47,21 +45,20 @@ const StyledMessage = styled.div`
   margin-top: ${({ theme }) => theme.spacing(2)};
 `;
 
-const StyledError = styled.div`
-  color: ${({ theme }) => ((theme as any).color?.danger ?? 'red')};
-  margin-top: ${({ theme }) => theme.spacing(2)};
-`;
-
-export const UnipileHello = () => {
+export const SocialContacts = () => {
   const client = useApolloClient();
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const onConnectSocialAccount = ({ username, password }) => {
+    // Lógica para iniciar el flujo de conexión de la cuenta social
+  }
 
   useEffect(() => {
     let mounted = true;
 
     client
-      .query({ query: UNIPILE_HELLO, fetchPolicy: 'no-cache' })
+      .query({ query: SOCIAL_HELLO, fetchPolicy: 'no-cache' })
       .then((res: any) => {
         if (!mounted) return;
         setMessage(res?.data?.hello?.message ?? JSON.stringify(res?.data));
@@ -69,6 +66,8 @@ export const UnipileHello = () => {
       .catch((e: any) => {
         if (!mounted) return;
         setError(e?.message ?? String(e));
+        // eslint-disable-next-line no-console
+        console.error('SocialContacts fetch error', e);
       });
 
     return () => {
@@ -79,13 +78,14 @@ export const UnipileHello = () => {
   return (
     <StyledContainer>
       <StyledCardWrapper>
-        <StyledTitle>Unipile integration — Hello</StyledTitle>
-        {message && <StyledMessage>{message}</StyledMessage>}
-        {error && <StyledError>Error: {error}</StyledError>}
-        {!message && !error && <StyledMessage>Loading...</StyledMessage>}
+        <StyledTitle>Social Contacts</StyledTitle>
+        {/* Formulario de conexión LinkedIn */}
+        <LinkedInConnectForm onConnectSocialAccount={onConnectSocialAccount} />
+
+
       </StyledCardWrapper>
     </StyledContainer>
   );
 };
 
-export default UnipileHello;
+export default SocialContacts;
