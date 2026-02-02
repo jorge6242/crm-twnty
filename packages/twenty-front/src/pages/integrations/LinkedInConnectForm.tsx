@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { FC, useState } from 'react';
+import { Button } from 'twenty-ui/input';
 
 const FormWrapper = styled.form`
   display: flex;
@@ -7,6 +8,9 @@ const FormWrapper = styled.form`
   gap: ${({ theme }) => theme.spacing(3)};
   width: 100%;
   max-width: 400px;
+  border: 2px solid grey;
+  padding: ${({ theme }) => theme.spacing(4)};
+  border-radius: ${({ theme }) => theme.border.radius.md};
 `;
 
 const Label = styled.label`
@@ -21,56 +25,82 @@ const Input = styled.input`
   font-size: ${({ theme }) => theme.font.size.md};
 `;
 
-const Button = styled.button`
-  padding: ${({ theme }) => theme.spacing(2)};
-  border-radius: ${({ theme }) => theme.border.radius.sm};
-  border: none;
-  background-color: ${({ theme }) => theme.color.green1};
-  color: ${({ theme }) => theme.color.gray};
-  font-size: ${({ theme }) => theme.font.size.md};
-  cursor: pointer;
+const InputContainer = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+  align-items: center;
+`;
 
-  &:hover {
-    background-color: ${({ theme }) => theme.color.green2};
-  }
+const ButtonContainer = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+  justify-content: center
+`;
+
+const StyledText = styled.div`
+  display: flex;
+  justify-content: center;
+  color: ${({ theme }) => theme.font.color.primary};
+  font-size: ${({ theme }) => theme.font.size.lg};
 `;
 
 interface LinkedInConnectFormProps {
-  onConnectSocialAccount: (credentials: { username: string; password: string }) => void;
+  onConnectSocialAccount: (credentials: {
+    username: string;
+    password: string;
+  }) => void;
+  socialLoading: boolean;
 }
 
-const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({ onConnectSocialAccount }) => {
+const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({
+  onConnectSocialAccount,
+  socialLoading,
+}) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  // Solo control de inputs, sin lógica de submit aún
-
- const onSubmit = (e: React.FormEvent) => {
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     onConnectSocialAccount({ username, password });
-  }
+  };
 
   return (
     <FormWrapper onSubmit={onSubmit}>
-      <Label htmlFor="linkedin-username">Usuario de LinkedIn</Label>
-      <Input
-        id="linkedin-username"
-        type="text"
-        autoComplete="username"
-        value={username}
-        onChange={e => setUsername(e.target.value)}
-        placeholder="Correo o usuario"
-      />
-      <Label htmlFor="linkedin-password">Contraseña de LinkedIn</Label>
-      <Input
-        id="linkedin-password"
-        type="password"
-        autoComplete="current-password"
-        value={password}
-        onChange={e => setPassword(e.target.value)}
-        placeholder="Contraseña"
+      <StyledText>Connect your LinkedIn account</StyledText>
+      <InputContainer>
+        <Label htmlFor="linkedin-username">Username</Label>
+        <Input
+          id="linkedin-username"
+          type="text"
+          autoComplete="username"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          placeholder="Email or username"
+          required
+        />
+      </InputContainer>
+      <InputContainer>
+        <Label htmlFor="linkedin-password">Password</Label>
+        <Input
+          id="linkedin-password"
+          type="password"
+          autoComplete="current-password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+        />
+      </InputContainer>
+
+      <ButtonContainer>
+
+      <Button
+        isLoading={socialLoading}
+        title="Connect"
+        onClick={onSubmit}
       />
 
-      <Button type="button" onClick={onSubmit}>Conectar cuenta de LinkedIn</Button>
+      </ButtonContainer>
     </FormWrapper>
   );
 };
