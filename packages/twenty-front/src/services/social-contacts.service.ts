@@ -1,0 +1,142 @@
+import { ApolloClient, gql } from '@apollo/client';
+import { SocialContactList } from '~/pages/integrations/SocialContacts';
+
+export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClient<TCache>, provider = 'linkedin') {
+  const QQLQuery = gql`
+    query GetLinkedSocialAccount($provider: String!) {
+      linkedSocialAccount(provider: $provider)
+        @rest(
+          type: "LinkedAccount"
+          path: "/metadata/social-accounts/{args.provider}"
+          method: "GET"
+        ) {
+        id
+        firstName
+        lastName
+        publicProfileUrl
+        profilePictureUrl
+      }
+    }
+  `;
+      const { data } = await client.query({
+        query: QQLQuery,
+        variables: { provider },
+        fetchPolicy: 'network-only',
+        context: { fetchOptions: { cache: 'no-store' } },
+      });
+
+  return data?.linkedSocialAccount ?? [];
+}
+
+export async function getLeadUserAccounts<TCache = any>(client: ApolloClient<TCache>) {
+  const QQLQuery = gql`
+    query getLeadUserAccounts {
+      linkedSocialAccounts
+        @rest(type: "LinkedAccount", path: "/metadata/social-accounts/list", method: "GET") {
+        id
+        firstName
+        lastName
+        username
+        source
+      }
+    }
+  `;
+  const { data } = await client.query({
+    query: QQLQuery,
+    fetchPolicy: 'network-only',
+    context: { fetchOptions: { cache: 'no-store' } },
+  });
+  return data?.linkedSocialAccounts ?? [];
+}
+
+export async function loginSocialAccount<TCache = any>(client: ApolloClient<TCache>, payload: { username: string; password: string; }) {
+    const { username, password } = payload;
+    const QQLQuery = gql`
+      mutation LinkSocialAccount($username: String!, $password: String!) {
+        linkSocialAccount(input: { username: $username, password: $password })
+          @rest(
+            type: "LinkAccountResponse"
+            path: "/metadata/social-accounts"
+            method: "POST"
+            bodyKey: "input"
+          ) {
+          message
+        }
+      }
+    `;
+      const { data } = await client.mutate({
+        mutation: QQLQuery,
+        variables: { username, password },
+        context: { fetchOptions: { cache: 'no-store' } },
+      });
+    return data?.linkSocialAccount ?? null;
+}
+
+export async function validateSocialAccount<TCache = any>(client: ApolloClient<TCache>, payload: { provider: string; code: string; }) {
+    const { provider, code } = payload;
+    const QQLQuery = gql`
+    mutation SolveCheckpoint($provider: String!, $code: String!) {
+      solveCheckpoint(input: { provider: $provider, code: $code })
+        @rest(
+          type: "LinkAccountResponse"
+          path: "/metadata/social-accounts/checkpoint"
+          method: "POST"
+          bodyKey: "input"
+        ) {
+        message
+      }
+    }
+  `;
+      const { data } = await client.mutate({
+        mutation: QQLQuery,
+        variables: { provider, code },
+        context: { fetchOptions: { cache: 'no-store' } },
+      });
+    return data?.solveCheckpoint ?? null;
+}
+
+export async function disconnectSocialAccount<TCache = any>(client: ApolloClient<TCache>, payload: { provider: string}) {
+    const { provider } = payload;
+    const QQLQuery = gql`
+      mutation DisconnectSocialAccount($provider: String!) {
+        disconnectSocialAccount(provider: $provider)
+          @rest(
+            type: "DisconnectAccountResponse"
+            path: "/metadata/social-accounts/disconnect/{args.provider}"
+            method: "DELETE"
+          ) {
+          message
+        }
+      }
+    `;
+      const { data } = await client.mutate({
+        mutation: QQLQuery,
+        variables: { provider },
+        context: { fetchOptions: { cache: 'no-store' } },
+      });
+    return data?.disconnectSocialAccount ?? null;
+}
+
+export async function storeContactsToPeople<TCache = any>(client: ApolloClient<TCache>, payload: { selectedContacts: SocialContactList[]}) {
+    const { selectedContacts  } = payload;
+    const QQLQuery = gql`
+      mutation MergeContacts($contacts: [JSON!]!) {
+        mergeContacts(input: { contacts: $contacts })
+          @rest(
+            type: "MergeContactsResponse"
+            path: "/metadata/social-accounts/merge-contacts"
+            method: "POST"
+            bodyKey: "input"
+          ) {
+          message
+          mergedCount
+        }
+      }
+    `;
+      const { data } = await client.mutate({
+        mutation: QQLQuery,
+        variables: { contacts: selectedContacts },
+        context: { fetchOptions: { cache: 'no-store' } },
+      })
+    return data?.mergeContacts ?? null;
+}

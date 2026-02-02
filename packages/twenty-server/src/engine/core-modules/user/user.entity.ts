@@ -23,6 +23,7 @@ import { OnboardingStatus } from 'src/engine/core-modules/onboarding/enums/onboa
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
 import { WorkspaceMemberDTO } from 'src/engine/core-modules/user/dtos/workspace-member.dto';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
+import { LeadUserEntity } from './lead-user.entity';
 
 registerEnumType(OnboardingStatus, {
   name: 'OnboardingStatus',
@@ -107,6 +108,9 @@ export class UserEntity {
     cascade: true,
   })
   keyValuePairs: Relation<KeyValuePairEntity[]>;
+
+  @OneToMany(() => LeadUserEntity, (lead) => lead.user, { cascade: true,})
+  leads: Relation<LeadUserEntity[]>;
 
   @Field(() => WorkspaceMemberDTO, { nullable: true })
   workspaceMember: Relation<WorkspaceMemberDTO>;

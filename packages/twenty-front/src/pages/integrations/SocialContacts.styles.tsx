@@ -1,0 +1,225 @@
+import styled from '@emotion/styled';
+
+export const SectionTitle = styled.h3`
+  color: #fff;
+  margin: 0 0 ${({ theme }) => theme.spacing(2)} 0;
+  font-size: ${({ theme }) => theme.font.size.md};
+`;
+
+export const SectionSubtitle = styled.div`
+  color: #fff;
+  font-size: ${({ theme }) => theme.font.size.md};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+`;
+
+export const ContactList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(3)};
+  margin-top: ${({ theme }) => theme.spacing(3)};
+`;
+
+export const ContactItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(3)};
+  padding: ${({ theme }) => theme.spacing(3)};
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: ${({ theme }) => theme.border.radius.sm};
+  transition: background 120ms ease, transform 120ms ease;
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    transform: translateY(-2px);
+  }
+`;
+
+export const Avatar = styled.img`
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+`;
+
+export const ContactInfo = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+`;
+
+export const Name = styled.div`
+  color: #fff;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.md};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const ProfileLink = styled.a`
+  color: rgba(255,255,255,0.75);
+  font-size: ${({ theme }) => theme.font.size.sm};
+  text-decoration: none;
+  margin-top: ${({ theme }) => theme.spacing(0.5)};
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
+/* Mantengo los estilos ya existentes exportados con los mismos nombres */
+export const StyledContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing(6)};
+`;
+
+export const StyledTabBar = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+  margin-bottom: ${({ theme }) => theme.spacing(4)};
+`;
+
+export const StyledTabButton = styled.button<{ $active?: boolean }>`
+  background: ${({ $active, theme }) =>
+    $active ? theme.background.secondary : 'transparent'};
+  color: ${({ theme }) => theme.font.color.primary};
+  border: none;
+  padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(3)};
+  border-radius: ${({ theme }) => theme.border.radius.sm};
+  cursor: pointer;
+`;
+
+export const TabContent = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+`;
+
+export const StyledCardWrapper = styled.div`
+  display: flex;
+  background-color: ${({ theme }) => theme.background.primary};
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  padding: ${({ theme }) => theme.spacing(6)};
+  box-shadow: ${({ theme }) => theme.boxShadow.strong};
+  border-radius: ${({ theme }) => theme.border.radius.md};
+`;
+
+export const StyledTitle = styled.h2`
+  color: ${({ theme }) => theme.font.color.primary};
+  font-size: ${({ theme }) => theme.font.size.lg};
+  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
+`;
+
+export const StyledMessage = styled.div`
+  color: white;
+  font-size: ${({ theme }) => theme.font.size.md};
+  margin-top: ${({ theme }) => theme.spacing(2)};
+`;
+
+
+export const SwitchContainer = styled.div`
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+`;
+
+export const SwitchButton = styled.button<{ $active?: boolean }>`
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  padding: ${({ theme }) => theme.spacing(1)} ${({ theme }) => theme.spacing(2)};
+  border-radius: 999px;
+  background: ${({ $active }) =>
+    $active ? 'linear-gradient(90deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)'};
+  color: ${({ $active }) => ($active ? '#061826' : 'rgba(255,255,255,0.9)')};
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.sm};
+  transition: background .12s ease, transform .08s ease;
+  &:active { transform: scale(0.98); }
+`;
+
+export const HeaderContactContainer = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(3)};
+`;
+
+export const BodyContactContainer = styled.div`
+  align-items: center;
+  padding-left: ${({ theme }) => theme.spacing(9)};
+  padding-right: ${({ theme }) => theme.spacing(9)};
+  gap: ${({ theme }) => theme.spacing(3)};
+`;
+
+export const BodyContactDetails = styled.div`
+  display: flex;
+  justify-content: space-between;
+  min-width: 0;
+`;
+
+export const SocialVerifyContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+flex-direction: column;
+  min-width: 0;
+  gap: ${({ theme }) => theme.spacing(4)};
+  border: 2px solid grey;
+  padding: ${({ theme }) => theme.spacing(4)};
+  border-radius: ${({ theme }) => theme.border.radius.md};
+`;
+
+export const SocialVerifyInputsContainer = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-width: 0;
+  gap: ${({ theme }) => theme.spacing(4)};
+`;
+
+export const SocialValidationContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing(4)};
+`;
+
+export const SocialButton = styled.button`
+  background: linear-gradient(90deg, #06b6d4, #3b82f6);
+  color: #061826;
+  border: none;
+  padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(4)};
+  border-radius: ${({ theme }) => theme.border.radius.md};
+  cursor: pointer;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.md};
+  transition: background 0.12s ease, transform 0.08s ease;
+  &:hover {
+    background: linear-gradient(90deg, #0e7490, #2563eb);
+  }
+  &:active {
+    transform: scale(0.98);
+  }
+`;
+
+export const InputApproveCodeContainer = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+  align-items: center;
+`;
+
+

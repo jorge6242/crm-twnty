@@ -34,4 +34,7 @@ export enum AppPath {
   // 404 page not found
   NotFoundWildcard = '*',
   NotFound = '/not-found',
+
+  // integrations
+  SocialContacts = '/integrations/social-contacts',
 }
