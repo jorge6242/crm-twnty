@@ -15,6 +15,7 @@ export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClie
         lastName
         publicProfileUrl
         profilePictureUrl
+        headline
       }
     }
   `;
@@ -140,3 +141,39 @@ export async function storeContactsToPeople<TCache = any>(client: ApolloClient<T
       })
     return data?.mergeContacts ?? null;
 }
+
+export async function getContactDetail<TCache = any>(client: ApolloClient<TCache>, payload: { contactId: string, accountId: string}) {
+    const { contactId, accountId } = payload;
+    const QQLQuery = gql`
+      query GetContactDetail($contactId: String!, $accountId: String!) {
+        getContactDetail(contactId: $contactId, accountId: $accountId)
+          @rest(
+            type: "GetContactDetailResponse"
+            path: "/metadata/social-accounts/get-contact-detail/{args.contactId}/{args.accountId}"
+            method: "GET"
+          ) {
+         email
+         firstName
+         lastName
+         profilePictureUrl
+         publicProfileUrl
+         id
+         lastCompany {
+          name
+          position
+          location
+          description
+          startDate
+          endDate
+         }
+        }
+      }
+    `;
+      const { data } = await client.query({
+        query: QQLQuery,
+        variables: { contactId, accountId },
+        context: { fetchOptions: { cache: 'no-store' } },
+      })
+    return data?.getContactDetail ?? null;
+}
+

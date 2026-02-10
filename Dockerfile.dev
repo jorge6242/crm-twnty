@@ -1,0 +1,31 @@
+FROM node:24.5.0-bookworm
+
+# Install build dependencies for native modules (like nice-napi, puppeteer, etc.)
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    build-essential \
+    pkg-config \
+    curl \
+    git \
+    libnss3 \
+    libatk-bridge2.0-0 \
+    libxss1 \
+    libasound2 \
+    libcairo2-dev \
+    libpango1.0-dev \
+    libjpeg-dev \
+    libgif-dev \
+    librsvg2-dev \
+    libpixman-1-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set the working directory
+WORKDIR /app
+
+# Enable Corepack for Yarn v4
+RUN corepack enable
+
+# Default command (overridden by docker-compose)
+CMD ["yarn", "install", "&&", "tail", "-f", "/dev/null"]

@@ -1,0 +1,26 @@
+name: twenty-dev
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: twenty-app
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - .:/app
+      - /app/node_modules # Anonymous volume to prevent host overwrite
+      - /app/packages/twenty-front/node_modules
+      - /app/packages/twenty-server/node_modules
+    environment:
+      - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=8192
+    networks:
+      - twenty_default
+    command: tail -f /dev/null
+
+networks:
+  twenty_default:
+    external: true

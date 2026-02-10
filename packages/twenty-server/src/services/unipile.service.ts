@@ -65,20 +65,19 @@ async getLinkedinConnections(accountId: string, limit = 50, cursor?: string) {
 }
 
 mapLinkedinConnections = (contacts: any[]) => {
-  console.log('contacts ', contacts);
   return contacts.map((contact) => {
     return {
       id: contact.member_id,
       firstName: contact.first_name,
       lastName: contact.last_name,
       publicProfileUrl: contact.public_profile_url,
-      profilePictureUrl: contact.profile_picture_url
+      profilePictureUrl: contact.profile_picture_url,
+      headline: contact.headline,
     };
   });
 }
 
 mapContacts({ contacts, type }: { contacts: any[], type: string }) {
-
   switch(type){
     case 'LINKEDIN':
       return this.mapLinkedinConnections(contacts);
@@ -91,8 +90,6 @@ mapContacts({ contacts, type }: { contacts: any[], type: string }) {
   async getLinkedinAccount(
     accountId: string,
   ): Promise<any | null> {
-    console.log('UnipileService getLinkedinAccount flag');
-
     try {
       // const res = await this.http.get<UnipileAccountResponse>(`/accounts/${accountId}`);
       const contactRes = await this.getLinkedinConnections(accountId);
@@ -157,24 +154,68 @@ mapContacts({ contacts, type }: { contacts: any[], type: string }) {
     }
   }
 
-  async getContactEmail(accountId: string, contact: MergeContactDto): Promise<MergeContactDto & { email: string } | null> {
+  async getContactEmail(accountId: string, contact: MergeContactDto): Promise<MergeContactDto & { email: string, phone: string ,profileUrl: string ,lastCompany: any} | null> {
   try {
-    this.logger.debug(`Enriching profile to get email: ${contact.id || contact}`);
     // This endpoint returns the complete profile.
     const res = await this.http.get<any>(`/users/${contact.id || contact}`, {
-      params: { account_id: accountId }
+      params: { account_id: accountId, linkedin_sections: 'experience' }
     });
-    console.log('res getContactEmail', res)
+    const lastCompany = res.data?.work_experience?.[0] || null;
+    console.log('res getContactEmail', res.data)
     return {
       email: res.data?.contact_info?.emails?.[0] || "",
+      phone: res.data?.contact_info?.phones?.[0] || "",
       firstName: res.data?.first_name || null,
       lastName: res.data?.last_name || null,
       profilePictureUrl: res.data?.profile_picture_url || null,
       publicProfileUrl: res.data?.public_profile_url || null,
+      profileUrl: res.data?.public_identifier ? `https://www.linkedin.com/in/${res.data?.public_identifier}` : "",
       id: contact.id || "",
+      lastCompany: lastCompany ? {
+        name: lastCompany.company,
+        position: lastCompany.position,
+        location: lastCompany.location,
+        description: lastCompany.description,
+        startDate: lastCompany?.start || null,
+        endDate: lastCompany?.end || null,
+        companyPictureUrl: lastCompany.company_picture_url,
+      } : null,
     };
   } catch (error) {
     this.logger.error(`Failed to get details for ${contact.id || contact}`, error);
+    return null;
+  }
+}
+  async getContactDetail(accountId: string, contactId: string): Promise<any | null> {
+  try {
+    // This endpoint returns the complete profile.
+    const res = await this.http.get<any>(`/users/${contactId}`, {
+      params: { account_id: accountId, linkedin_sections: 'experience', force_update: true }
+    });
+
+    const lastCompany = res.data?.work_experience?.[0] || null;
+
+    console.log('res getContactDetail', res.data)
+
+    return {
+      email: res.data?.contact_info?.emails?.[0] || "",
+      firstName: res.data?.first_name || null,
+      lastName: res.data?.last_name || null,
+      headline: res.data?.headline || null,
+      profilePictureUrl: res.data?.profile_picture_url || null,
+      publicProfileUrl: res.data?.public_profile_url || null,
+      id: contactId || "",
+      lastCompany: lastCompany ? {
+        name: lastCompany.company,
+        position: lastCompany.position,
+        location: lastCompany.location,
+        description: lastCompany.description,
+        startDate: lastCompany?.start || null,
+        endDate: lastCompany?.end || null,
+      } : null,
+    };
+  } catch (error) {
+    this.logger.error(`Failed to get details for ${contactId}`, error);
     return null;
   }
 }

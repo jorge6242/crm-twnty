@@ -20,6 +20,29 @@ export const ContactList = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing(3)};
   margin-top: ${({ theme }) => theme.spacing(3)};
+  max-height: calc(100vh - 350px);
+  overflow-y: auto;
+  padding-right: ${({ theme }) => theme.spacing(2)};
+
+  /* Custom Scrollbar - Premium Aesthetics */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    transition: background 0.2s ease;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
 `;
 
 export const ContactItem = styled.div`
@@ -50,15 +73,52 @@ export const ContactInfo = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: ${({ theme }) => theme.spacing(1)};
 `;
 
 export const Name = styled.div`
+  color: #fff;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.xl};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const Headline = styled.div`
   color: #fff;
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.md};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-style: italic;
+`;
+
+export const LastJob = styled.div`
+  color: #fff;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.sm};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const ShowDetailsButton = styled.button<{ $active?: boolean }>`
+  color: #fff;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.md};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  &:hover {
+    text-decoration: underline;
+  }
 `;
 
 export const ProfileLink = styled.a`

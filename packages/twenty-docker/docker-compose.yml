@@ -108,6 +108,8 @@ services:
 
   db:
     image: postgres:16
+    ports:
+      - "5433:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
     environment:
@@ -123,6 +125,9 @@ services:
 
   redis:
     image: redis
+    container_name: twenty_redis
+    ports:
+      - "6380:6379"
     restart: always
     command: ["--maxmemory-policy", "noeviction"]
     healthcheck:
