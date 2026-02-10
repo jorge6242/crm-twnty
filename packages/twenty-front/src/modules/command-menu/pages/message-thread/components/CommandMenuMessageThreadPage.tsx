@@ -122,6 +122,10 @@ export const CommandMenuMessageThreadPage = () => {
         break;
       case ConnectedAccountProvider.IMAP_SMTP_CALDAV:
         throw new Error('Account provider not supported');
+      case ConnectedAccountProvider.LINKEDIN:
+        url = `https://www.linkedin.com/messaging/thread/${messageThreadExternalId}`;
+        window.open(url, '_blank');
+        break;
       case null:
         throw new Error('Account provider not provided');
       default:

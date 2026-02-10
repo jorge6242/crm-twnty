@@ -78,8 +78,21 @@ export class SocialAccountsController {
 
     return this.service.mergeContactsToPeople(
       input.contacts,
+      request,
+    );
+  }
+
+    @Get('get-contact-detail/:contactId/:accountId')
+  async getContactDetail(
+    @Req() request: AuthenticatedRequest,
+    @Param('contactId') contactId: string,
+    @Param('accountId') accountId: string,
+  ) {
+    console.log('getContactDetail with input:', contactId, accountId);
+
+    return this.service.getContactDetail(
+      contactId,
       request.user,
-      request.workspaceId || '',
     );
   }
 }

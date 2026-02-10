@@ -10,7 +10,9 @@ import {
   ContactItem,
   ContactList,
   HeaderContactContainer,
+  Headline,
   InputApproveCodeContainer,
+  LastJob,
   Name,
   ProfileLink,
   SectionSubtitle,
@@ -26,7 +28,7 @@ import {
   StyledTitle,
   SwitchButton,
   SwitchContainer,
-  TabContent,
+  TabContent
 } from './SocialContacts.styles';
 
 export interface SocialContactList {
@@ -35,6 +37,7 @@ export interface SocialContactList {
   lastName: string;
   profilePictureUrl?: string;
   publicProfileUrl?: string;
+  headline?: string;
 }
 
 export const SocialContacts = () => {
@@ -44,20 +47,22 @@ export const SocialContacts = () => {
     loginSocialAccount,
     validateSocialAccount,
     disconnectSocialAccount,
-    storeContactsToPeople
+    storeContactsToPeople,
+    getContactDetail
   } = useSocialContactService();
   const [activeTab, setActiveTab] = useState<'linkedin' | 'whatsapp' | 'gmail'>('linkedin');
   const [showSyncLinkedinButton, setShowSyncLinkedinButton] = useState(false);
   const [approveCode, setApproveCode] = useState<string>('');
   const [accounts, setAccounts] = useState<SocialContactList[]>([]);
-  const [leadUserSocialAccounts, setLeadUserSocialAccounts] = useState<any[]>(
-    [],
-  );
+  const [leadUserSocialAccounts, setLeadUserSocialAccounts] = useState<any[]>([]);
   const [businessMap, setBusinessMap] = useState<Record<string, boolean>>({});
   const [mergeAccountsLoading, setMergeAccountsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [disconnectLoading, setDisconnectLoading] = useState(false);
   const [socialVerifyLoading, setSocialVerifyLoading] = useState(false);
+  const [isAccountDetailLoading, setIsAccountDetailLoading] = useState(false);
+  const [selectedAccountDetail, setSelectedAccountDetail] = useState<string | null>(null);
+  const [accountDetailList, setAccountDetailList] = useState<any[]>([]);
 
   const mergeContactsToPeople = async () => {
     const selectedContacts = accounts.filter(
@@ -175,6 +180,17 @@ export const SocialContacts = () => {
 
   const toggleBusiness = (key: string) => {
     setBusinessMap((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const onShowContactDetails = async (contactId: string, accountId: string) => {
+    setSelectedAccountDetail(contactId);
+    setIsAccountDetailLoading(true);
+    const currentSocialAccountId =  getLeadUserAccount('linkedin') ? getLeadUserAccount('linkedin').id : ''
+
+    const contact = await getContactDetail({ contactId, accountId: currentSocialAccountId });
+    setIsAccountDetailLoading(false);
+    setAccountDetailList(prev => [...prev, contact]);
+    console.log(contact);
   };
 
   useEffect(() => {
@@ -297,7 +313,9 @@ export const SocialContacts = () => {
 
                   <div>
                     <ContactList role="list" aria-label="LinkedIn contacts">
-                      {accounts.map((account, index) => (
+                      {accounts.map((account, index) => {
+                        const currentAccountDetail   = accountDetailList.find((accountDetail) => accountDetail.id === account.id);
+                        return (
                         <ContactItem
                           key={account.id}
                           role="listitem"
@@ -314,6 +332,7 @@ export const SocialContacts = () => {
                             <Name>
                               {account.firstName ?? ''} {account.lastName ?? ''}
                             </Name>
+                            <Headline>{account.headline}</Headline>
                             {account.publicProfileUrl ? (
                               <ProfileLink
                                 href={account.publicProfileUrl}
@@ -327,6 +346,22 @@ export const SocialContacts = () => {
                                 No profile URL
                               </ProfileLink>
                             )}
+                            {
+                              currentAccountDetail ? (
+                                <LastJob>
+                                  <p>Company: {currentAccountDetail?.lastCompany?.name}</p>
+                                  <p>Position: {currentAccountDetail?.lastCompany?.position}</p>
+                                  <p>Email: {currentAccountDetail?.email}</p>
+                                </LastJob>
+                              ) : (
+                                <Button
+                                  isLoading={isAccountDetailLoading && selectedAccountDetail === account.id}
+                                  title="Show Details"
+                                  onClick={() => onShowContactDetails(account.id, account.id)}
+                                />
+                              )
+                            }
+
                           </ContactInfo>
 
                           <SwitchContainer>
@@ -341,7 +376,8 @@ export const SocialContacts = () => {
                             </SwitchButton>
                           </SwitchContainer>
                         </ContactItem>
-                      ))}
+                      )
+                      })}
                     </ContactList>
                   </div>
                 </BodyContactContainer>

@@ -2,13 +2,23 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 
+import { WorkspaceAuthContext } from 'src/engine/api/common/interfaces/workspace-auth-context.interface';
 import {
   LeadSource,
   LeadUserEntity,
 } from 'src/engine/core-modules/user/lead-user.entity';
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
+import {
+  AddressMetadata,
+  ConnectedAccountProvider,
+  FieldActorSource,
+  LinksMetadata,
+} from 'twenty-shared/types';
+
+import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
+import { CompanyWorkspaceEntity } from 'src/modules/company/standard-objects/company.workspace-entity';
 import { CreatePersonService } from 'src/modules/contact-creation-manager/services/create-person.service';
 import { MergeContactDto } from 'src/modules/integrations/social-accounts/dto/merge-contact.dto';
 import { PersonWorkspaceEntity } from 'src/modules/person/standard-objects/person.workspace-entity';
@@ -21,6 +31,7 @@ export class SocialAccountsService {
     @InjectRepository(LeadUserEntity)
     private readonly leadUserRepository: Repository<LeadUserEntity>,
     private readonly createPersonService: CreatePersonService,
+    private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
   ) {}
 
   getLeadUserAccounts(user: UserEntity): Promise<LeadUserEntity[]> {
@@ -137,57 +148,177 @@ export class SocialAccountsService {
 
   async mergeContactsToPeople(
     contacts: MergeContactDto[],
-    user: UserEntity,
-    workspaceId: string,
+    authContext: WorkspaceAuthContext,
   ) {
+    const { user, workspace } = authContext;
+    const workspaceId = workspace.id;
+    console.log('Starting mergeContactsToPeople for workspace:', workspaceId);
+    return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+      authContext,
+      async () => {
+        try {
+          const leadUserRes = await this.leadUserRepository.findOne({
+            where: { source: LeadSource.LINKEDIN, user: { id: user?.id } },
+          });
+          const accountId = leadUserRes?.providerAccountId ?? '';
+          const newPeoples = [];
+          const chunkSize = 5;
+
+          for (let i = 0; i < contacts.length; i += chunkSize) {
+            const chunk = contacts.slice(i, i + chunkSize);
+            const chunkPromises = chunk.map((c) =>
+              this.unipileService.getContactEmail(accountId, c),
+            );
+
+            const enrichedChunk = await Promise.all(chunkPromises);
+            newPeoples.push(...enrichedChunk);
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+          }
+
+          // ... (Rest of the mapping logic remains same, but wrapped in try-catch) ...
+          // Using a shorter variable name for brevity in this specific replacement
+          const uniqueCompaniesMap = new Map<string, Partial<CompanyWorkspaceEntity>>();
+          newPeoples.forEach((p: any) => {
+            if (p.lastCompany?.name && !uniqueCompaniesMap.has(p.lastCompany.name)) {
+              uniqueCompaniesMap.set(p.lastCompany.name, {
+                id: uuidv4(),
+                name: p.lastCompany.name,
+                address: {
+                  addressStreet1: null as any,
+                  addressStreet2: null as any,
+                  addressCity: p.lastCompany.location || (null as any),
+                  addressState: null as any,
+                  addressZipCode: null as any,
+                  addressCountry: null as any,
+                  addressLat: null as any,
+                  addressLng: null as any,
+                } as AddressMetadata,
+                domainName: {
+                  primaryLinkUrl: null as any,
+                  primaryLinkLabel: null as any,
+                  secondaryLinks: null,
+                } as LinksMetadata,
+                linkedinLink: {
+                  primaryLinkUrl: null as any,
+                  primaryLinkLabel: null as any,
+                  secondaryLinks: null,
+                } as LinksMetadata,
+              });
+            }
+          });
+
+          const companyRepository = await this.globalWorkspaceOrmManager.getRepository(
+            workspaceId,
+            CompanyWorkspaceEntity,
+            { shouldBypassPermissionChecks: true },
+          );
+
+          const uniqueCompanyNames = Array.from(uniqueCompaniesMap.keys());
+          const existingCompanies = await companyRepository.find({
+            where: { name: In(uniqueCompanyNames) }
+          });
+
+          const existingCompaniesByName = new Map(existingCompanies.map(c => [c.name, c]));
+          const companiesToInsert: any[] = [];
+
+          for (const [name, companyData] of uniqueCompaniesMap.entries()) {
+            const existingCompany = existingCompaniesByName.get(name);
+            if (existingCompany) {
+              uniqueCompaniesMap.get(name)!.id = existingCompany.id;
+            } else {
+              companiesToInsert.push({
+                ...companyData,
+                createdBy: {
+                  source: FieldActorSource.API,
+                  workspaceMemberId: null,
+                  name: 'Social Accounts Service',
+                  context: { provider: ConnectedAccountProvider.LINKEDIN },
+                },
+                updatedBy: {
+                  source: FieldActorSource.API,
+                  workspaceMemberId: null,
+                  name: 'Social Accounts Service',
+                  context: { provider: ConnectedAccountProvider.LINKEDIN },
+                },
+              });
+            }
+          }
+
+          if (companiesToInsert.length > 0) {
+            await companyRepository.insert(companiesToInsert);
+          }
+
+          const peopleToCreate: Partial<PersonWorkspaceEntity>[] = newPeoples
+            .filter((p: any) => p)
+            .map((p: any) => {
+              const firstName = p.firstName ?? '';
+              const lastName = p.lastName ?? '';
+              const companyId = p.lastCompany?.name ? uniqueCompaniesMap.get(p.lastCompany.name)?.id : null;
+              return {
+                id: uuidv4(),
+                companyId: companyId,
+                jobTitle: p.lastCompany?.position || null,
+                emails: {
+                  primaryEmail: p.email ? (p.email as string).toLowerCase() : null,
+                  additionalEmails: null,
+                },
+                city: p.lastCompany?.location || null,
+                phones: {
+                  primaryPhoneNumber: p.phone || null,
+                  primaryPhoneCountryCode: null as any,
+                  primaryPhoneCallingCode: null as any,
+                  additionalPhones: null as any,
+                },
+                name: {
+                  firstName: firstName || null,
+                  lastName: lastName || null,
+                },
+                linkedinLink: p.profileUrl || p.publicProfileUrl
+                  ? ({
+                      primaryLinkUrl: p.profileUrl || p.publicProfileUrl,
+                      primaryLinkLabel: null,
+                      secondaryLinks: null,
+                    } as any)
+                  : null,
+                avatarUrl: p.profilePictureUrl ?? null,
+              } as Partial<PersonWorkspaceEntity>;
+            });
+
+          const created = await this.createPersonService.createPeople(
+            peopleToCreate,
+            workspaceId,
+          );
+
+          console.log('Merge completed successfully:', created.length, 'people created.');
+
+          return {
+            success: true,
+            count: created.length
+          };
+        } catch (error) {
+          console.error('ERROR DETECTADO EN mergeContactsToPeople:', error);
+          if (error instanceof Error) {
+            console.error('Error Stack:', error.stack);
+          }
+          throw error;
+        }
+      },
+    );
+}
+
+
+  async getContactDetail(contactId: string, user: UserEntity) {
     const leadUserRes = await this.leadUserRepository.findOne({
       where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
     });
-    const accountId = leadUserRes?.providerAccountId ?? '';
-    const newPeoples = [];
-    const chunkSize = 5;
 
-    for (let i = 0; i < contacts.length; i += chunkSize) {
-      const chunk = contacts.slice(i, i + chunkSize);
-      ``;
-      const chunkPromises = chunk.map((c) =>
-        this.unipileService.getContactEmail(accountId, c),
-      );
-
-      const enrichedChunk = await Promise.all(chunkPromises);
-      newPeoples.push(...enrichedChunk);
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+    if (leadUserRes) {
+      console.log('Found lead user for provider ', leadUserRes);
+    } else {
+      console.log('No lead user found for provider ');
     }
-    const peopleToCreate: Partial<PersonWorkspaceEntity>[] = newPeoples
-      .filter((p: any) => p)
-      .map((p: any) => {
-        const firstName = p.firstName ?? '';
-        const lastName = p.lastName ?? '';
-
-        return {
-          id: uuidv4(),
-          emails: {
-            primaryEmail: p.email ? (p.email as string).toLowerCase() : null,
-            additionalEmails: null,
-          },
-          name: {
-            firstName: firstName || null,
-            lastName: lastName || null,
-          },
-          linkedinLink: p.publicProfileUrl
-            ? ({
-                primaryLinkUrl: p.publicProfileUrl,
-                primaryLinkLabel: null,
-                secondaryLinks: null,
-              } as any)
-            : null,
-          avatarUrl: p.profilePictureUrl ?? null,
-        } as Partial<PersonWorkspaceEntity>;
-      });
-    const created = await this.createPersonService.createPeople(
-      peopleToCreate,
-      workspaceId,
-    );
-    return { enriched: newPeoples, created };
+    const accountId = leadUserRes?.providerAccountId ?? '';
+    return this.unipileService.getContactDetail(accountId, contactId);
   }
+
 }
