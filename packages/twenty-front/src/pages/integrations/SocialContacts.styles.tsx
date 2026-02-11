@@ -283,3 +283,14 @@ export const InputApproveCodeContainer = styled.div`
 `;
 
 
+export const PresenceBadge = styled.div<{ $present?: boolean }>`
+  background: ${({ $present }) => ($present ? 'rgba(34, 197, 94, 0.1)' : 'rgba(255, 255, 255, 0.04)')};
+  color: ${({ $present }) => ($present ? '#4ade80' : 'rgba(255, 255, 255, 0.5)')};
+  border: 1px solid ${({ $present }) => ($present ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255, 255, 255, 0.1)')};
+  padding: ${({ theme }) => theme.spacing(0.5)} ${({ theme }) => theme.spacing(2)};
+  border-radius: 4px;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+`;

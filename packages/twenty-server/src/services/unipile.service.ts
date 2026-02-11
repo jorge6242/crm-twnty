@@ -48,20 +48,21 @@ export class UnipileService {
 
   // servidor (ejemplo)
 async getLinkedinConnections(accountId: string, limit = 50, cursor?: string) {
-  this.logger.debug(`Intentando conectar con Unipile para la cuenta: ${accountId}`);
+  this.logger.debug(`Attempting to connect with Unipile for account: ${accountId}${cursor ? ' with cursor: ' + cursor : ''}`);
 
-  // El endpoint correcto según la doc de Unipile es /users/relations
-  return this.http.get<{ items: unknown[]; cursor?: string }>(
+  // The correct endpoint according to Unipile docs is /users/relations
+  const res = await this.http.get<{ items: any[]; cursor?: string }>(
     '/users/relations',
     {
       params: {
         account_id: accountId,
-        role: 'CONNECTION', // Importante para LinkedIn: trae tus contactos directos
+        role: 'CONNECTION', // Important for LinkedIn: brings your direct contacts
         limit: limit,
-        ...(cursor && { cursor })
+        ...(cursor && cursor !== 'null' && cursor !== 'undefined' && { cursor })
       }
     }
   );
+  return res.data;
 }
 
 mapLinkedinConnections = (contacts: any[]) => {
@@ -89,15 +90,22 @@ mapContacts({ contacts, type }: { contacts: any[], type: string }) {
 
   async getLinkedinAccount(
     accountId: string,
+    cursor?: string
   ): Promise<any | null> {
     try {
-      // const res = await this.http.get<UnipileAccountResponse>(`/accounts/${accountId}`);
-      const contactRes = await this.getLinkedinConnections(accountId);
-      const mappedContacts = this.mapContacts({ contacts: contactRes.data.items, type: 'LINKEDIN' });
-      return mappedContacts;
+      const contactRes = await this.getLinkedinConnections(accountId, 50, cursor);
+      const mappedContacts = this.mapContacts({ contacts: contactRes.items, type: 'LINKEDIN' });
+
+      return {
+        contacts: mappedContacts,
+        nextCursor: contactRes.cursor || null
+      };
     } catch (error) {
       const err = error as AxiosError;
-      console.log('getLinkedinAccount err ', err)
+      console.log('getLinkedinAccount err ', err);
+      if (err.response?.data) {
+        this.logger.error('Unipile Error Response Body:', JSON.stringify(err.response.data, null, 2));
+      }
       // If account not found, return null so callers can treat it as "not linked yet"
       if (err.response?.status === 404) {
         this.logger.warn(`Unipile account ${accountId} not found`);
@@ -169,7 +177,7 @@ mapContacts({ contacts, type }: { contacts: any[], type: string }) {
       lastName: res.data?.last_name || null,
       profilePictureUrl: res.data?.profile_picture_url || null,
       publicProfileUrl: res.data?.public_profile_url || null,
-      profileUrl: res.data?.public_identifier ? `https://www.linkedin.com/in/${res.data?.public_identifier}` : "",
+      profileUrl: res.data?.public_identifier ? `https://www.linkedin.com/in/${res.data?.public_identifier}/` : "",
       id: contact.id || "",
       lastCompany: lastCompany ? {
         name: lastCompany.company,

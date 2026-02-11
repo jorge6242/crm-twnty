@@ -7,7 +7,7 @@ export function useSocialContactService() {
   const client = useApolloClient();
 
   const getLeadUserAccounts = useCallback(async () => svc.getLeadUserAccounts(client), [client]);
-  const getLinkedinAccountDetails = useCallback(async (provider = 'linkedin') => svc.getLinkedinAccountDetails(client, provider), [client]);
+  const getLinkedinAccountDetails = useCallback(async (provider = 'linkedin', cursor?: string) => svc.getLinkedinAccountDetails(client, provider, cursor), [client]);
   const loginSocialAccount = useCallback(async (payload: { username: string; password: string; }) => svc.loginSocialAccount(client, payload), [client]);
   const validateSocialAccount = useCallback(async (payload: { provider: string; code: string; }) => svc.validateSocialAccount(client, payload), [client]);
   const disconnectSocialAccount = useCallback(async (payload: { provider: string }) => svc.disconnectSocialAccount(client, payload), [client]);

@@ -92,7 +92,14 @@ export class SocialAccountsService {
     };
   }
 
-  async getLinkedinAccount(provider: string, user: UserEntity) {
+  async getLinkedinAccount(
+    provider: string,
+    authContext: WorkspaceAuthContext,
+    cursor?: string,
+  ) {
+    const { user, workspace } = authContext;
+    const workspaceId = workspace.id;
+
     const leadUserRes = await this.leadUserRepository.findOne({
       where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
     });
@@ -103,7 +110,59 @@ export class SocialAccountsService {
       console.log('No lead user found for provider ', provider);
     }
     const accountId = leadUserRes?.providerAccountId ?? '';
-    return this.unipileService.getLinkedinAccount(accountId);
+    const cleanCursor =
+      cursor === 'null' || cursor === 'undefined' ? undefined : cursor;
+    const unipileRes = await this.unipileService.getLinkedinAccount(
+      accountId,
+      cleanCursor,
+    );
+
+    if (!unipileRes || !unipileRes.contacts) {
+      return unipileRes;
+    }
+
+    // Bulk lookup to check if contacts are already in CRM
+    // Must be wrapped in workspace context
+    try {
+      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+        authContext,
+        async () => {
+          const profileUrls = unipileRes.contacts
+            .map((c: any) => c.publicProfileUrl)
+            .filter(Boolean);
+
+          if (profileUrls.length > 0) {
+            const personRepository =
+              await this.globalWorkspaceOrmManager.getRepository(
+                workspaceId,
+                PersonWorkspaceEntity,
+                { shouldBypassPermissionChecks: true },
+              );
+
+            const existingPeople = await personRepository.find({
+              where: {
+                linkedinLink: {
+                  primaryLinkUrl: In(profileUrls),
+                },
+              } as any,
+            });
+            const existingUrlsMap = new Map(
+              existingPeople.map((p) => [p.linkedinLink?.primaryLinkUrl, p.id]),
+            );
+            unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
+              ...contact,
+              isAlreadyInCrm: existingUrlsMap.has(contact.publicProfileUrl),
+              personId: existingUrlsMap.get(contact.publicProfileUrl) || null,
+            }));
+          }
+        },
+      );
+    } catch (error) {
+      console.error('Error checking contact presence in CRM:', error);
+      // We don't want to break the whole list if the lookup fails
+    }
+
+    return unipileRes;
   }
 
   async solveCheckpoint(provider: string, code: string, user: UserEntity) {

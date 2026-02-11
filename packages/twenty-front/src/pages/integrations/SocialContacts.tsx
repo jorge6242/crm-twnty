@@ -38,6 +38,8 @@ export interface SocialContactList {
   profilePictureUrl?: string;
   publicProfileUrl?: string;
   headline?: string;
+  isAlreadyInCrm?: boolean;
+  personId?: string | null;
 }
 
 export const SocialContacts = () => {
@@ -54,12 +56,14 @@ export const SocialContacts = () => {
   const [showSyncLinkedinButton, setShowSyncLinkedinButton] = useState(false);
   const [approveCode, setApproveCode] = useState<string>('');
   const [accounts, setAccounts] = useState<SocialContactList[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [leadUserSocialAccounts, setLeadUserSocialAccounts] = useState<any[]>([]);
   const [businessMap, setBusinessMap] = useState<Record<string, boolean>>({});
   const [mergeAccountsLoading, setMergeAccountsLoading] = useState(false);
   const [socialLoading, setSocialLoading] = useState(false);
   const [disconnectLoading, setDisconnectLoading] = useState(false);
   const [socialVerifyLoading, setSocialVerifyLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isAccountDetailLoading, setIsAccountDetailLoading] = useState(false);
   const [selectedAccountDetail, setSelectedAccountDetail] = useState<string | null>(null);
   const [accountDetailList, setAccountDetailList] = useState<any[]>([]);
@@ -68,11 +72,35 @@ export const SocialContacts = () => {
     const selectedContacts = accounts.filter(
       (acc) => acc?.id && !!businessMap[acc.id],
     );
+
+    if (selectedContacts.length === 0) {
+      return null;
+    }
+
     try {
       setMergeAccountsLoading(true);
       const res = await storeContactsToPeople({ selectedContacts });
+
+      if (res) {
+        // Update local state: mark synchronized contacts as already in CRM
+        const selectedIds = new Set(selectedContacts.map(c => c.id));
+        setAccounts(prevAccounts =>
+          prevAccounts.map(acc =>
+            selectedIds.has(acc.id)
+              ? { ...acc, isAlreadyInCrm: true }
+              : acc
+          )
+        );
+
+        // Clear businessMap for synchronized contacts
+        setBusinessMap(prevMap => {
+          const newMap = { ...prevMap };
+          selectedIds.forEach(id => delete newMap[id]);
+          return newMap;
+        });
+      }
+
       setMergeAccountsLoading(false);
-      setBusinessMap({});
       return res ?? null;
     } catch (error) {
       setMergeAccountsLoading(false);
@@ -106,6 +134,7 @@ export const SocialContacts = () => {
       if(res){
       setDisconnectLoading(false);
       setAccounts([]);
+      setNextCursor(null);
       setShowSyncLinkedinButton(false);
       }
 
@@ -114,13 +143,21 @@ export const SocialContacts = () => {
     }
   };
 
-  const getLinkedinAccountDetails = async () => {
+  const getLinkedinAccountDetails = async (cursor?: string) => {
     try {
-      setSocialVerifyLoading(true);
-      const accountsData = await getLinkedinAccountDetailsApi('linkedin');
+      if (cursor) {
+        setIsLoadingMore(true);
+      } else {
+        setSocialVerifyLoading(true);
+      }
+
+      const response = await getLinkedinAccountDetailsApi('linkedin', cursor);
+      const accountsData = response?.contacts ?? [];
+      const newCursor = response?.nextCursor ?? null;
+
       if (accountsData.length) {
-        setSocialVerifyLoading(false);
-        setAccounts(accountsData);
+        setAccounts((prev) => cursor ? [...prev, ...accountsData] : accountsData);
+        setNextCursor(newCursor);
         setBusinessMap((prev) => {
           const next = { ...prev };
           accountsData.forEach((acc: any) => {
@@ -130,15 +167,20 @@ export const SocialContacts = () => {
           return next;
         });
         setShowSyncLinkedinButton(true);
-      } else {
+      } else if (!cursor) {
         setShowSyncLinkedinButton(false);
       }
+
       setSocialVerifyLoading(false);
+      setIsLoadingMore(false);
 
       return accountsData ?? null;
     } catch (error) {
-      setShowSyncLinkedinButton(false);
+      if (!cursor) {
+        setShowSyncLinkedinButton(false);
+      }
       setSocialVerifyLoading(false);
+      setIsLoadingMore(false);
       return null;
     }
   };
@@ -330,15 +372,15 @@ export const SocialContacts = () => {
                           />
                           <ContactInfo>
                             <Name>
-                              {account.firstName ?? ''} {account.lastName ?? ''}
-                            </Name>
-                            <Headline>{account.headline}</Headline>
+                                {account.firstName ?? ''} {account.lastName ?? ''}
+                              </Name>
+                              <Headline>{account.headline}</Headline>
                             {account.publicProfileUrl ? (
                               <ProfileLink
                                 href={account.publicProfileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                              >
+                                >
                                 {account.publicProfileUrl}
                               </ProfileLink>
                             ) : (
@@ -365,20 +407,32 @@ export const SocialContacts = () => {
                           </ContactInfo>
 
                           <SwitchContainer>
-                            <SwitchButton
-                              $active={!!businessMap[account.id]}
-                              aria-pressed={!!businessMap[account.id]}
-                              onClick={() => toggleBusiness(account.id)}
-                            >
-                              {businessMap[account.id]
-                                ? 'Business account selected'
-                                : 'Not Selected'}
-                            </SwitchButton>
+                             <SwitchButton
+                               $active={!!businessMap[account.id] || account.isAlreadyInCrm}
+                               aria-pressed={!!businessMap[account.id] || account.isAlreadyInCrm}
+                               onClick={() => !account.isAlreadyInCrm && toggleBusiness(account.id)}
+                               style={{ cursor: account.isAlreadyInCrm ? 'default' : 'pointer', opacity: account.isAlreadyInCrm ? 0.7 : 1 }}
+                             >
+                               {account.isAlreadyInCrm
+                                 ? 'Synchronized'
+                                 : businessMap[account.id]
+                                   ? 'Business account selected'
+                                   : 'Not Selected'}
+                             </SwitchButton>
                           </SwitchContainer>
                         </ContactItem>
                       )
                       })}
                     </ContactList>
+                    {nextCursor && (
+                      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          isLoading={isLoadingMore}
+                          title="Load More Contacts"
+                          onClick={() => getLinkedinAccountDetails(nextCursor)}
+                        />
+                      </div>
+                    )}
                   </div>
                 </BodyContactContainer>
               )}
