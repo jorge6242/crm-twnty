@@ -5,8 +5,9 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
-  UseGuards,
+  UseGuards
 } from '@nestjs/common';
 
 import { AuthenticatedRequest } from 'src/engine/api/rest/types/authenticated-request';
@@ -53,12 +54,14 @@ export class SocialAccountsController {
     );
   }
 
+
   @Get(':provider')
   async getLinkedinAccount(
     @Param('provider') provider: string,
     @Req() request: AuthenticatedRequest,
+    @Query('cursor') cursor?: string,
   ) {
-    return this.service.getLinkedinAccount(provider, request.user);
+    return this.service.getLinkedinAccount(provider, request, cursor);
   }
 
   @Delete('disconnect/:provider')

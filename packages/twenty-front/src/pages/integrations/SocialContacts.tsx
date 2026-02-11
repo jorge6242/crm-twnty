@@ -1,404 +1,242 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Button } from 'twenty-ui/input';
-import { useSocialContactService } from '~/hooks/services/use-social-contact.service';
 import LinkedInConnectForm from '~/pages/integrations/LinkedInConnectForm';
-import {
-  Avatar,
-  BodyContactContainer,
-  BodyContactDetails,
-  ContactInfo,
-  ContactItem,
-  ContactList,
-  HeaderContactContainer,
-  Headline,
-  InputApproveCodeContainer,
-  LastJob,
-  Name,
-  ProfileLink,
-  SectionSubtitle,
-  SectionTitle,
-  SocialValidationContainer,
-  SocialVerifyContainer,
-  SocialVerifyInputsContainer,
-  StyledCardWrapper,
-  StyledContainer,
-  StyledMessage,
-  StyledTabBar,
-  StyledTabButton,
-  StyledTitle,
-  SwitchButton,
-  SwitchContainer,
-  TabContent
-} from './SocialContacts.styles';
-
-export interface SocialContactList {
-  id: string;
-  firstName: string;
-  lastName: string;
-  profilePictureUrl?: string;
-  publicProfileUrl?: string;
-  headline?: string;
-}
+import { useLinkedInContacts } from './hooks/useLinkedInContacts';
+import * as S from './SocialContacts.styles';
 
 export const SocialContacts = () => {
-  const {
-    getLinkedinAccountDetails: getLinkedinAccountDetailsApi,
-    getLeadUserAccounts: getLeadUserAccountsApi,
-    loginSocialAccount,
-    validateSocialAccount,
-    disconnectSocialAccount,
-    storeContactsToPeople,
-    getContactDetail
-  } = useSocialContactService();
   const [activeTab, setActiveTab] = useState<'linkedin' | 'whatsapp' | 'gmail'>('linkedin');
-  const [showSyncLinkedinButton, setShowSyncLinkedinButton] = useState(false);
-  const [approveCode, setApproveCode] = useState<string>('');
-  const [accounts, setAccounts] = useState<SocialContactList[]>([]);
-  const [leadUserSocialAccounts, setLeadUserSocialAccounts] = useState<any[]>([]);
-  const [businessMap, setBusinessMap] = useState<Record<string, boolean>>({});
-  const [mergeAccountsLoading, setMergeAccountsLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState(false);
-  const [disconnectLoading, setDisconnectLoading] = useState(false);
-  const [socialVerifyLoading, setSocialVerifyLoading] = useState(false);
-  const [isAccountDetailLoading, setIsAccountDetailLoading] = useState(false);
-  const [selectedAccountDetail, setSelectedAccountDetail] = useState<string | null>(null);
-  const [accountDetailList, setAccountDetailList] = useState<any[]>([]);
 
-  const mergeContactsToPeople = async () => {
-    const selectedContacts = accounts.filter(
-      (acc) => acc?.id && !!businessMap[acc.id],
-    );
-    try {
-      setMergeAccountsLoading(true);
-      const res = await storeContactsToPeople({ selectedContacts });
-      setMergeAccountsLoading(false);
-      setBusinessMap({});
-      return res ?? null;
-    } catch (error) {
-      setMergeAccountsLoading(false);
-      return null;
-    }
-  };
-
-  const getLeadUserAccount = (type: string) => {
-    switch (type) {
-      case 'linkedin':
-        return leadUserSocialAccounts.find((e) => e.source === 'linkedin');
-      default:
-        return null;
-    }
-  };
-
-  const getLeadUserAccounts = async () => {
-    try {
-      const data = await getLeadUserAccountsApi();
-      setLeadUserSocialAccounts(data);
-      return data;
-    } catch (error) {
-      return [];
-    }
-  };
-
-  const onDisconnectAccount = async (provider: string) => {
-    try {
-      setDisconnectLoading(true);
-      const res = await disconnectSocialAccount({ provider });
-      if(res){
-      setDisconnectLoading(false);
-      setAccounts([]);
-      setShowSyncLinkedinButton(false);
-      }
-
-    } catch (error) {
-      setDisconnectLoading(false);
-    }
-  };
-
-  const getLinkedinAccountDetails = async () => {
-    try {
-      setSocialVerifyLoading(true);
-      const accountsData = await getLinkedinAccountDetailsApi('linkedin');
-      if (accountsData.length) {
-        setSocialVerifyLoading(false);
-        setAccounts(accountsData);
-        setBusinessMap((prev) => {
-          const next = { ...prev };
-          accountsData.forEach((acc: any) => {
-            if (!acc?.id) return;
-            if (typeof next[acc.id] === 'undefined') next[acc.id] = false;
-          });
-          return next;
-        });
-        setShowSyncLinkedinButton(true);
-      } else {
-        setShowSyncLinkedinButton(false);
-      }
-      setSocialVerifyLoading(false);
-
-      return accountsData ?? null;
-    } catch (error) {
-      setShowSyncLinkedinButton(false);
-      setSocialVerifyLoading(false);
-      return null;
-    }
-  };
-
-  const verifyLinkedAccount = async (provider: string) => {
-    setSocialVerifyLoading(true);
-    try {
-      await validateSocialAccount({ provider, code: approveCode });
-      const account = await getLinkedinAccountDetails();
-      if (account && account.status === 'linked') {
-        setSocialVerifyLoading(false);
-        setShowSyncLinkedinButton(true);
-      } else {
-        setShowSyncLinkedinButton(false);
-      }
-    } catch (error) {
-      setShowSyncLinkedinButton(false);
-    } finally {
-      setSocialVerifyLoading(false);
-    }
-  };
-
-  const onConnectSocialAccount = async ({
-    username,
-    password,
-  }: {
-    username: string;
-    password: string;
-  }) => {
-    setSocialLoading(true);
-    const result = await loginSocialAccount({ username, password });
-    if (result) {
-      setShowSyncLinkedinButton(true);
-      setSocialLoading(false);
-    } else {
-      setSocialLoading(false);
-    }
-  };
-
-  const toggleBusiness = (key: string) => {
-    setBusinessMap((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  const onShowContactDetails = async (contactId: string, accountId: string) => {
-    setSelectedAccountDetail(contactId);
-    setIsAccountDetailLoading(true);
-    const currentSocialAccountId =  getLeadUserAccount('linkedin') ? getLeadUserAccount('linkedin').id : ''
-
-    const contact = await getContactDetail({ contactId, accountId: currentSocialAccountId });
-    setIsAccountDetailLoading(false);
-    setAccountDetailList(prev => [...prev, contact]);
-    console.log(contact);
-  };
-
-  useEffect(() => {
-    getLinkedinAccountDetails();
-    getLeadUserAccounts();
-  }, []);
-
-  const selectedCount = useMemo(() => Object.values(businessMap).filter(Boolean).length,[businessMap]);
+  const {
+    contacts,
+    nextCursor,
+    leadAccount,
+    selectedCount,
+    showSyncButton,
+    setApproveCode,
+    businessMap,
+    accountDetailList,
+    selectedAccountDetail,
+    isLoading,
+    fetchContacts,
+    loadMoreContacts,
+    mergeSelectedContacts,
+    disconnectAccount,
+    verifyAccount,
+    connectAccount,
+    toggleContactSelection,
+    fetchContactDetails,
+  } = useLinkedInContacts();
 
   return (
-    <StyledContainer>
-      <StyledCardWrapper>
-        <StyledTitle>Integration of social media contacts</StyledTitle>
+    <S.StyledContainer>
+      <S.StyledCardWrapper>
+        <S.StyledTitle>Integration of social media contacts</S.StyledTitle>
 
-        <StyledTabBar
+        <S.StyledTabBar
           role="tablist"
           aria-label="Integraciones de redes sociales"
         >
-          <StyledTabButton
+          <S.StyledTabButton
             $active={activeTab === 'linkedin'}
             role="tab"
             aria-selected={activeTab === 'linkedin'}
             onClick={() => setActiveTab('linkedin')}
           >
             LinkedIn
-          </StyledTabButton>
+          </S.StyledTabButton>
 
-          <StyledTabButton
+          <S.StyledTabButton
             $active={activeTab === 'whatsapp'}
             role="tab"
             aria-selected={activeTab === 'whatsapp'}
             onClick={() => setActiveTab('whatsapp')}
           >
             WhatsApp
-          </StyledTabButton>
+          </S.StyledTabButton>
 
-          <StyledTabButton
+          <S.StyledTabButton
             $active={activeTab === 'gmail'}
             role="tab"
             aria-selected={activeTab === 'gmail'}
             onClick={() => setActiveTab('gmail')}
           >
             Gmail
-          </StyledTabButton>
-        </StyledTabBar>
+          </S.StyledTabButton>
+        </S.StyledTabBar>
 
-        <TabContent>
+        <S.TabContent>
           {activeTab === 'linkedin' && (
             <>
-              <HeaderContactContainer>
-                <SocialValidationContainer>
-                  {!accounts.length && (
-                    <StyledMessage>Connect your LinkedIn account</StyledMessage>
+              <S.HeaderContactContainer>
+                <S.SocialValidationContainer>
+                  {!contacts.length && (
+                    <S.StyledMessage>Connect your LinkedIn account</S.StyledMessage>
                   )}
-                  {!accounts?.length && showSyncLinkedinButton && (
-                    <SocialVerifyContainer>
-                      <SectionSubtitle>
+                  {!contacts?.length && showSyncButton && (
+                    <S.SocialVerifyContainer>
+                      <S.SectionSubtitle>
                         Check the code by email or accept approval via the app.
-                      </SectionSubtitle>
-                      <SocialVerifyInputsContainer>
-                        <InputApproveCodeContainer>
+                      </S.SectionSubtitle>
+                      <S.SocialVerifyInputsContainer>
+                        <S.InputApproveCodeContainer>
                           <input
                             type="text"
                             placeholder="Insert Approve Code"
                             onChange={(e) => setApproveCode(e.target.value)}
                           />
                           <Button
-                            isLoading={socialVerifyLoading}
+                            isLoading={isLoading.verify}
                             title="Check code"
-                            onClick={() => verifyLinkedAccount('linkedin')}
+                            onClick={() => verifyAccount('linkedin')}
                           />
-                        </InputApproveCodeContainer>
-                        <SectionSubtitle>Or</SectionSubtitle>
+                        </S.InputApproveCodeContainer>
+                        <S.SectionSubtitle>Or</S.SectionSubtitle>
                         <div>
                           <Button
-                            isLoading={socialVerifyLoading}
+                            isLoading={isLoading.verify}
                             title="Check Approve by App"
-                            onClick={() => getLinkedinAccountDetails()}
+                            onClick={() => fetchContacts()}
                           />
                         </div>
-                      </SocialVerifyInputsContainer>
-                    </SocialVerifyContainer>
+                      </S.SocialVerifyInputsContainer>
+                    </S.SocialVerifyContainer>
                   )}
-                  {!accounts?.length && !showSyncLinkedinButton && (
+                  {!contacts?.length && !showSyncButton && (
                     <LinkedInConnectForm
-                      onConnectSocialAccount={onConnectSocialAccount}
-                      socialLoading={socialLoading}
+                      onConnectSocialAccount={connectAccount}
+                      socialLoading={isLoading.connect}
                     />
                   )}
-                </SocialValidationContainer>
-              </HeaderContactContainer>
+                </S.SocialValidationContainer>
+              </S.HeaderContactContainer>
 
-              {accounts.length && (
-                <BodyContactContainer>
-                  <BodyContactDetails>
+              {contacts.length && (
+                <S.BodyContactContainer>
+                  <S.BodyContactDetails>
                     <div>
-                      <SectionTitle>Account Details</SectionTitle>
-                      <SectionSubtitle>
-                        Username:{' '}
-                        {getLeadUserAccount('linkedin')
-                          ? getLeadUserAccount('linkedin').username
-                          : ''}
-                      </SectionSubtitle>
+                      <S.SectionTitle>Account Details</S.SectionTitle>
+                      <S.SectionSubtitle>
+                        Username:
+                        {leadAccount?.username ?? ''}
+                      </S.SectionSubtitle>
                       <Button
-                        isLoading={disconnectLoading}
+                        isLoading={isLoading.disconnect}
                         title="Disconnect Account"
-                        onClick={() => onDisconnectAccount('linkedin')}
+                        onClick={() => disconnectAccount('linkedin')}
                       />
                     </div>
                     {selectedCount > 0 && (
                       <div>
                         <Button
-                          isLoading={mergeAccountsLoading}
+                          isLoading={isLoading.merge}
                           title={`Merge ${selectedCount} Contacts to People`}
-                          onClick={() => mergeContactsToPeople()}
+                          onClick={() => mergeSelectedContacts()}
                         />
                       </div>
                     )}
-                  </BodyContactDetails>
+                  </S.BodyContactDetails>
 
                   <div>
-                    <ContactList role="list" aria-label="LinkedIn contacts">
-                      {accounts.map((account, index) => {
+                    <S.ContactList role="list" aria-label="LinkedIn contacts">
+                      {contacts.map(account => {
                         const currentAccountDetail   = accountDetailList.find((accountDetail) => accountDetail.id === account.id);
                         return (
-                        <ContactItem
+                        <S.ContactItem
                           key={account.id}
                           role="listitem"
                           aria-label={`LinkedIn contact ${account.firstName ?? ''} ${account.lastName ?? ''}`}
                         >
-                          <Avatar
+                          <S.Avatar
                             src={
                               account.profilePictureUrl ??
                               '/placeholder-avatar.png'
                             }
                             alt={`${account.firstName ?? ''} ${account.lastName ?? ''}`}
                           />
-                          <ContactInfo>
-                            <Name>
-                              {account.firstName ?? ''} {account.lastName ?? ''}
-                            </Name>
-                            <Headline>{account.headline}</Headline>
+                          <S.ContactInfo>
+                            <S.Name>
+                                {account.firstName ?? ''} {account.lastName ?? ''}
+                              </S.Name>
+                              <S.Headline>{account.headline}</S.Headline>
                             {account.publicProfileUrl ? (
-                              <ProfileLink
+                              <S.ProfileLink
                                 href={account.publicProfileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                              >
+                                >
                                 {account.publicProfileUrl}
-                              </ProfileLink>
+                              </S.ProfileLink>
                             ) : (
-                              <ProfileLink as="span" aria-hidden="true">
+                              <S.ProfileLink as="span" aria-hidden="true">
                                 No profile URL
-                              </ProfileLink>
+                              </S.ProfileLink>
                             )}
                             {
                               currentAccountDetail ? (
-                                <LastJob>
+                                <S.LastJob>
                                   <p>Company: {currentAccountDetail?.lastCompany?.name}</p>
                                   <p>Position: {currentAccountDetail?.lastCompany?.position}</p>
                                   <p>Email: {currentAccountDetail?.email}</p>
-                                </LastJob>
+                                </S.LastJob>
                               ) : (
                                 <Button
-                                  isLoading={isAccountDetailLoading && selectedAccountDetail === account.id}
+                                  isLoading={isLoading.details && selectedAccountDetail === account.id}
                                   title="Show Details"
-                                  onClick={() => onShowContactDetails(account.id, account.id)}
+                                  onClick={() => fetchContactDetails(account.id, account.id)}
                                 />
                               )
                             }
 
-                          </ContactInfo>
+                          </S.ContactInfo>
 
-                          <SwitchContainer>
-                            <SwitchButton
-                              $active={!!businessMap[account.id]}
-                              aria-pressed={!!businessMap[account.id]}
-                              onClick={() => toggleBusiness(account.id)}
-                            >
-                              {businessMap[account.id]
-                                ? 'Business account selected'
-                                : 'Not Selected'}
-                            </SwitchButton>
-                          </SwitchContainer>
-                        </ContactItem>
+                          <S.SwitchContainer>
+                             <S.SwitchButton
+                               $active={!!businessMap[account.id] || account.isAlreadyInCrm}
+                               aria-pressed={!!businessMap[account.id] || account.isAlreadyInCrm}
+                               onClick={() => !account.isAlreadyInCrm && toggleContactSelection(account.id)}
+                               style={{ cursor: account.isAlreadyInCrm ? 'default' : 'pointer', opacity: account.isAlreadyInCrm ? 0.7 : 1 }}
+                             >
+                               {account.isAlreadyInCrm
+                                 ? 'Synchronized'
+                                 : businessMap[account.id]
+                                   ? 'Business account selected'
+                                   : 'Not Selected'}
+                             </S.SwitchButton>
+                          </S.SwitchContainer>
+                        </S.ContactItem>
                       )
                       })}
-                    </ContactList>
+                    </S.ContactList>
+                    {nextCursor && (
+                      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                        <Button
+                          isLoading={isLoading.loadMore}
+                          title="Load More Contacts"
+                          onClick={loadMoreContacts}
+                        />
+                      </div>
+                    )}
                   </div>
-                </BodyContactContainer>
+                </S.BodyContactContainer>
               )}
             </>
           )}
 
           {activeTab === 'whatsapp' && (
-            <StyledMessage>
+            <S.StyledMessage>
               WhatsApp — Demo mode: integration coming soon.
-            </StyledMessage>
+            </S.StyledMessage>
           )}
 
           {activeTab === 'gmail' && (
-            <StyledMessage>
+            <S.StyledMessage>
               WhatsApp — Demo mode: integration coming soon.
-            </StyledMessage>
+            </S.StyledMessage>
           )}
-        </TabContent>
-      </StyledCardWrapper>
-    </StyledContainer>
+        </S.TabContent>
+      </S.StyledCardWrapper>
+    </S.StyledContainer>
   );
 };
 

@@ -1,32 +1,38 @@
 import { ApolloClient, gql } from '@apollo/client';
 import { SocialContactList } from '~/pages/integrations/SocialContacts';
 
-export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClient<TCache>, provider = 'linkedin') {
+export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClient<TCache>, provider = 'linkedin', cursor?: string) {
   const QQLQuery = gql`
-    query GetLinkedSocialAccount($provider: String!) {
-      linkedSocialAccount(provider: $provider)
+    query GetLinkedSocialAccount($provider: String!, $cursor: String) {
+      linkedSocialAccount(provider: $provider, cursor: $cursor)
         @rest(
-          type: "LinkedAccount"
-          path: "/metadata/social-accounts/{args.provider}"
+          type: "LinkedAccountResponse"
+          path: "/metadata/social-accounts/{args.provider}{args.cursor}"
           method: "GET"
         ) {
-        id
-        firstName
-        lastName
-        publicProfileUrl
-        profilePictureUrl
-        headline
+        contacts @type(name: "LinkedAccount") {
+          id
+          firstName
+          lastName
+          publicProfileUrl
+          profilePictureUrl
+          headline
+          isAlreadyInCrm
+          personId
+        }
+        nextCursor
       }
     }
   `;
+      const formattedCursor = (cursor && cursor !== 'null' && cursor !== 'undefined') ? `?cursor=${cursor}` : '';
       const { data } = await client.query({
         query: QQLQuery,
-        variables: { provider },
+        variables: { provider, cursor: formattedCursor },
         fetchPolicy: 'network-only',
         context: { fetchOptions: { cache: 'no-store' } },
       });
 
-  return data?.linkedSocialAccount ?? [];
+  return data?.linkedSocialAccount ?? { contacts: [], nextCursor: null };
 }
 
 export async function getLeadUserAccounts<TCache = any>(client: ApolloClient<TCache>) {
