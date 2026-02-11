@@ -5,9 +5,9 @@ import { useRedirect } from '@/domain-manager/hooks/useRedirect';
 import { CustomError } from 'twenty-shared/utils';
 import { REACT_APP_SERVER_BASE_URL } from '~/config';
 import {
-  type CalendarChannelVisibility,
-  type MessageChannelVisibility,
-  useGenerateTransientTokenMutation,
+    type CalendarChannelVisibility,
+    type MessageChannelVisibility,
+    useGenerateTransientTokenMutation,
 } from '~/generated-metadata/graphql';
 
 const getProviderUrl = (provider: ConnectedAccountProvider) => {
@@ -16,6 +16,8 @@ const getProviderUrl = (provider: ConnectedAccountProvider) => {
       return 'google-apis';
     case ConnectedAccountProvider.MICROSOFT:
       return 'microsoft-apis';
+    case ConnectedAccountProvider.LINKEDIN:
+      return 'linkedin-apis'; // Placeholder for future or private implementation
     default:
       throw new CustomError(
         `Provider ${provider} is not supported`,
