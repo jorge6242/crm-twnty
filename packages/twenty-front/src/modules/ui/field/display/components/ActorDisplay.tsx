@@ -5,18 +5,19 @@ import { useMemo } from 'react';
 import { ConnectedAccountProvider } from 'twenty-shared/types';
 import { AvatarChip, Chip } from 'twenty-ui/components';
 import {
-  IconApi,
-  IconCalendar,
-  IconCsv,
-  IconGmail,
-  IconGoogleCalendar,
-  IconMail,
-  IconMicrosoftCalendar,
-  IconMicrosoftOutlook,
-  IconPlug,
-  IconRobot,
-  IconSettingsAutomation,
-  IconWebhook,
+    IconApi,
+    IconBrandLinkedin,
+    IconCalendar,
+    IconCsv,
+    IconGmail,
+    IconGoogleCalendar,
+    IconMail,
+    IconMicrosoftCalendar,
+    IconMicrosoftOutlook,
+    IconPlug,
+    IconRobot,
+    IconSettingsAutomation,
+    IconWebhook,
 } from 'twenty-ui/display';
 
 type ActorDisplayProps = Partial<FieldActorValue> & {
@@ -28,6 +29,7 @@ const PROVIDORS_ICON_MAPPING = {
     [ConnectedAccountProvider.MICROSOFT]: IconMicrosoftOutlook,
     [ConnectedAccountProvider.GOOGLE]: IconGmail,
     [ConnectedAccountProvider.IMAP_SMTP_CALDAV]: IconMail,
+    [ConnectedAccountProvider.LINKEDIN]: IconBrandLinkedin,
     default: IconMail,
   },
   CALENDAR: {
