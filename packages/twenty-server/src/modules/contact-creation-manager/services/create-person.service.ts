@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
+import { WorkspaceAuthContext } from 'src/engine/api/common/interfaces/workspace-auth-context.interface';
+
 import { DeepPartial } from 'typeorm';
 
+import { ActorFromAuthContextService } from 'src/engine/core-modules/actor/services/actor-from-auth-context.service';
 import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspace-datasource/global-workspace-orm.manager';
 import { type WorkspaceRepository } from 'src/engine/twenty-orm/repository/workspace.repository';
 import { buildSystemAuthContext } from 'src/engine/twenty-orm/utils/build-system-auth-context.util';
@@ -11,15 +14,18 @@ import { PersonWorkspaceEntity } from 'src/modules/person/standard-objects/perso
 export class CreatePersonService {
   constructor(
     private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
+    private readonly actorFromAuthContextService: ActorFromAuthContextService,
   ) {}
 
   public async createPeople(
     peopleToCreate: Partial<PersonWorkspaceEntity>[],
     workspaceId: string,
+    publicAuthContext?: WorkspaceAuthContext,
   ): Promise<DeepPartial<PersonWorkspaceEntity>[]> {
     if (peopleToCreate.length === 0) return [];
 
-    const authContext = buildSystemAuthContext(workspaceId);
+    const authContext =
+      publicAuthContext ?? buildSystemAuthContext(workspaceId);
 
     return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
       authContext,
@@ -36,11 +42,21 @@ export class CreatePersonService {
         const lastPersonPosition =
           await this.getLastPersonPosition(personRepository);
 
+        const peopleWithPosition = peopleToCreate.map((person, index) => ({
+          ...person,
+          position: lastPersonPosition + index,
+        }));
+
+        const peopleWithActor = publicAuthContext
+          ? ((await this.actorFromAuthContextService.injectActorFieldsOnCreate({
+              records: peopleWithPosition,
+              objectMetadataNameSingular: 'person',
+              authContext: publicAuthContext,
+            })) as Partial<PersonWorkspaceEntity>[])
+          : peopleWithPosition;
+
         const createdPeople = await personRepository.insert(
-          peopleToCreate.map((person, index) => ({
-            ...person,
-            position: lastPersonPosition + index,
-          })),
+          peopleWithActor,
           undefined,
           ['companyId', 'id'],
         );
