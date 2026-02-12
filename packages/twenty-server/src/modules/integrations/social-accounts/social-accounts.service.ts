@@ -346,6 +346,7 @@ export class SocialAccountsService {
           const created = await this.createPersonService.createPeople(
             peopleToCreate,
             workspaceId,
+            authContext,
           );
 
           console.log('Merge completed successfully:', created.length, 'people created.');

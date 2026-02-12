@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
+import { ActorModule } from 'src/engine/core-modules/actor/actor.module';
+
 import { FeatureFlagEntity } from 'src/engine/core-modules/feature-flag/feature-flag.entity';
 import { FieldMetadataEntity } from 'src/engine/metadata-modules/field-metadata/field-metadata.entity';
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
@@ -14,6 +16,7 @@ import { CreatePersonService } from 'src/modules/contact-creation-manager/servic
     WorkspaceDataSourceModule,
     TypeOrmModule.forFeature([FeatureFlagEntity]),
     TypeOrmModule.forFeature([ObjectMetadataEntity, FieldMetadataEntity]),
+    ActorModule,
   ],
   providers: [
     CreateCompanyService,
