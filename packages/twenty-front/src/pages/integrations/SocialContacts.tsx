@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import { Button } from 'twenty-ui/input';
 import { SocialContactsTabContent } from '~/pages/integrations/components/social-contact-tab-content';
 import { useMicrosoftEmail } from '~/pages/integrations/hooks/useMicrosoftEmail';
@@ -7,13 +6,10 @@ import { useLinkedInContacts } from './hooks/useLinkedInContacts';
 import * as S from './SocialContacts.styles';
 
 export const SocialContacts = () => {
-  const [activeTab, setActiveTab] = useState<'linkedin' | 'whatsapp' | 'email'>('linkedin');
-
   const {
     contacts,
     nextCursor,
     leadAccount,
-    leadEmailAccount,
     selectedCount,
     showSyncButton,
     setApproveCode,
@@ -29,29 +25,15 @@ export const SocialContacts = () => {
     connectAccount,
     toggleContactSelection,
     fetchContactDetails,
-  } = useLinkedInContacts({ provider: activeTab });
+    activeTab,
+    setActiveTab,
+  } = useLinkedInContacts();
 
   const {
     isConnected: isMicrosoftConnected,
     isLoading: isMicrosoftLoading,
     connectMicrosoft,
   } = useMicrosoftEmail();
-
-    useEffect(() => {
-    const handleOAuthCallback = async (): Promise<void> => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const accountId = urlParams.get('account_id');
-
-      if (!accountId) return;
-
-      console.log('🔗 OAuth callback detectado:', accountId);
-
-
-
-    };
-
-    handleOAuthCallback();
-  }, []); // Solo se ejecuta al montar
 
   return (
     <S.StyledContainer>
@@ -86,7 +68,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'email'}
             onClick={() => setActiveTab('email')}
           >
-            Email
+            Microsoft Outlook
           </S.StyledTabButton>
         </S.StyledTabBar>
 
@@ -164,11 +146,14 @@ export const SocialContacts = () => {
 
           {activeTab === 'email' && (
             <>
-          {!leadEmailAccount && !isMicrosoftConnected ? (
+          {!leadAccount && !isMicrosoftConnected ? (
             <div>
-              <S.StyledMessage>
-                Connect your Microsoft Outlook account to access emails
-              </S.StyledMessage>
+              {!contacts.length && (
+                <>
+                <S.StyledMessage>Connect your Microsoft Outlook account to access emails</S.StyledMessage>
+
+                </>
+              )}
               <Button
                 isLoading={isMicrosoftLoading}
                 title="Connect Microsoft Outlook"

@@ -239,16 +239,28 @@ async disconnectAccount(provider: string, user: UserEntity) {
   async mergeContactsToPeople(
     contacts: MergeContactDto[],
     authContext: WorkspaceAuthContext,
+    provider: string
   ) {
     const { user, workspace } = authContext;
     const workspaceId = workspace.id;
-    console.log('Starting mergeContactsToPeople for workspace:', workspaceId);
+    // Convertir provider string a LeadSource enum
+    const sourceMap: Record<string, LeadSource> = {
+      'linkedin': LeadSource.LINKEDIN,
+      'email': LeadSource.EMAIL,
+      'microsoft': LeadSource.EMAIL,
+    };
+
+    const leadSource = sourceMap[provider.toLowerCase()];
+    if (!leadSource) {
+      throw new Error(`Unsupported provider: ${provider}`);
+    }
+
     return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
       authContext,
       async () => {
         try {
           const leadUserRes = await this.leadUserRepository.findOne({
-            where: { source: LeadSource.LINKEDIN, user: { id: user?.id } },
+            where: { source: leadSource, user: { id: user?.id } },
           });
           const accountId = leadUserRes?.providerAccountId ?? '';
           const newPeoples = [];
@@ -256,26 +268,16 @@ async disconnectAccount(provider: string, user: UserEntity) {
 
           for (let i = 0; i < contacts.length; i += chunkSize) {
             const chunk = contacts.slice(i, i + chunkSize);
-            const chunkPromises = chunk.map((c) =>
-              this.unipileService.getContactEmail(accountId, c),
-            );
+            const chunkPromises = chunk.map((c) => this.unipileService.getContactEmail(accountId, c, provider));
 
             const enrichedChunk = await Promise.all(chunkPromises);
             newPeoples.push(...enrichedChunk);
             await new Promise((resolve) => setTimeout(resolve, 2000));
           }
 
-          // ... (Rest of the mapping logic remains same, but wrapped in try-catch) ...
-          // Using a shorter variable name for brevity in this specific replacement
-          const uniqueCompaniesMap = new Map<
-            string,
-            Partial<CompanyWorkspaceEntity>
-          >();
+          const uniqueCompaniesMap = new Map<string,Partial<CompanyWorkspaceEntity>>();
           newPeoples.forEach((p: any) => {
-            if (
-              p.lastCompany?.name &&
-              !uniqueCompaniesMap.has(p.lastCompany.name)
-            ) {
+            if (p?.lastCompany?.name && !uniqueCompaniesMap.has(p.lastCompany.name)) {
               uniqueCompaniesMap.set(p.lastCompany.name, {
                 id: uuidv4(),
                 name: p.lastCompany.name,
@@ -303,7 +305,8 @@ async disconnectAccount(provider: string, user: UserEntity) {
             }
           });
 
-          const companyRepository =
+          if(uniqueCompaniesMap.size > 0) {
+            const companyRepository =
             await this.globalWorkspaceOrmManager.getRepository(
               workspaceId,
               CompanyWorkspaceEntity,
@@ -346,15 +349,14 @@ async disconnectAccount(provider: string, user: UserEntity) {
           if (companiesToInsert.length > 0) {
             await companyRepository.insert(companiesToInsert);
           }
+          }
 
           const peopleToCreate: Partial<PersonWorkspaceEntity>[] = newPeoples
             .filter((p: any) => p)
             .map((p: any) => {
               const firstName = p.firstName ?? '';
               const lastName = p.lastName ?? '';
-              const companyId = p.lastCompany?.name
-                ? uniqueCompaniesMap.get(p.lastCompany.name)?.id
-                : null;
+              const companyId = p.lastCompany?.name ? uniqueCompaniesMap.get(p.lastCompany.name)?.id : null;
               return {
                 id: uuidv4(),
                 companyId: companyId,
@@ -575,9 +577,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
       microsoft: LeadSource.EMAIL,
       outlook: LeadSource.EMAIL,
     };
-    console.log('getProviderContacts provider ', provider)
     const leadSource = sourceMap[provider.toLowerCase()];
-    console.log('getProviderContacts provider ', provider)
     if (!leadSource) {
       throw new BadRequestException(`Provider "${provider}" not supported`);
     }
@@ -669,31 +669,16 @@ async disconnectAccount(provider: string, user: UserEntity) {
       await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
         authContext,
         async () => {
-          const emails = unipileRes.contacts
-            .map((c: any) => c.email)
-            .filter(Boolean);
-
+          const emails = unipileRes.contacts.map((c: any) => c.email).filter(Boolean);
           if (emails.length > 0) {
-            const personRepository =
-              await this.globalWorkspaceOrmManager.getRepository(
+            const personRepository = await this.globalWorkspaceOrmManager.getRepository(
                 workspaceId,
                 PersonWorkspaceEntity,
                 { shouldBypassPermissionChecks: true },
               );
 
-            // Buscar por email principal
-            const existingPeople = await personRepository
-              .createQueryBuilder('person')
-              .where("person.emails->>'primaryEmail' IN (:...emails)", {
-                emails,
-              })
-              .getMany();
-
-            const existingEmailsSet = new Set(
-              existingPeople
-                .map((p) => p.emails?.primaryEmail?.toLowerCase())
-                .filter(Boolean),
-            );
+            const existingPeople = await personRepository.createQueryBuilder('person').where("person.emailsPrimaryEmail IN (:...emails)", {emails,}).getMany();
+            const existingEmailsSet = new Set(existingPeople.map((p: any) => p.emails?.primaryEmail?.toLowerCase()).filter(Boolean));
 
             unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
               ...contact,

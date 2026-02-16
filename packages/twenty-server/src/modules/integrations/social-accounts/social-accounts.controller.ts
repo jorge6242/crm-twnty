@@ -61,7 +61,7 @@ async getProviderContacts(  // ← Cambiar nombre
   @Req() request: AuthenticatedRequest,
   @Query('cursor') cursor?: string,
 ) {
-  return this.service.getProviderContacts(provider, request, cursor);  // ← Cambiar llamada
+  return this.service.getProviderContacts(provider, request, cursor);
 }
 
   @Delete('disconnect/:provider')
@@ -75,13 +75,14 @@ async getProviderContacts(  // ← Cambiar nombre
   @Post('merge-contacts')
   async mergeContacts(
     @Req() request: AuthenticatedRequest,
-    @Body() input: { contacts: MergeContactDto[] },
+    @Body() input: { contacts: MergeContactDto[], provider: string },
   ) {
     console.log('Merging contacts with input:', input);
 
     return this.service.mergeContactsToPeople(
       input.contacts,
       request,
+      input.provider,
     );
   }
 

@@ -12,7 +12,7 @@ export function useSocialContactService() {
   const loginSocialAccount = useCallback(async (payload: { username: string; password: string; }) => svc.loginSocialAccount(client, payload), [client]);
   const validateSocialAccount = useCallback(async (payload: { provider: string; code: string; }) => svc.validateSocialAccount(client, payload), [client]);
   const disconnectSocialAccount = useCallback(async (payload: { provider: string }) => svc.disconnectSocialAccount(client, payload), [client]);
-  const storeContactsToPeople = useCallback(async (payload: { selectedContacts: SocialContactList[] }) => svc.storeContactsToPeople(client, payload), [client]);
+  const storeContactsToPeople = useCallback(async (payload: { selectedContacts: SocialContactList[], provider: string }) => svc.storeContactsToPeople(client, payload), [client]);
   const getContactDetail = useCallback(async (payload: { contactId: string, accountId: string }) => svc.getContactDetail(client, payload), [client]);
 
   return useMemo(() => ({

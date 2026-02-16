@@ -153,7 +153,7 @@ export const StyledTabButton = styled.button<{ $active?: boolean }>`
   background: ${({ $active, theme }) =>
     $active ? theme.background.secondary : 'transparent'};
   color: ${({ theme }) => theme.font.color.primary};
-  border: none;
+  border: ${({ $active }) => ($active ? '1px solid #ffffffff' : '1px solid #b2b1b1ff')} ;
   padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(3)};
   border-radius: ${({ theme }) => theme.border.radius.sm};
   cursor: pointer;

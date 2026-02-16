@@ -126,11 +126,11 @@ export async function disconnectSocialAccount<TCache = any>(client: ApolloClient
     return data?.disconnectSocialAccount ?? null;
 }
 
-export async function storeContactsToPeople<TCache = any>(client: ApolloClient<TCache>, payload: { selectedContacts: SocialContactList[]}) {
-    const { selectedContacts  } = payload;
+export async function storeContactsToPeople<TCache = any>(client: ApolloClient<TCache>, payload: { selectedContacts: SocialContactList[], provider: string}) {
+    const { selectedContacts, provider  } = payload;
     const QQLQuery = gql`
-      mutation MergeContacts($contacts: [JSON!]!) {
-        mergeContacts(input: { contacts: $contacts })
+      mutation MergeContacts($contacts: [JSON!]!, $provider: String!) {
+        mergeContacts(input: { contacts: $contacts, provider: $provider })
           @rest(
             type: "MergeContactsResponse"
             path: "/metadata/social-accounts/merge-contacts"
@@ -144,7 +144,7 @@ export async function storeContactsToPeople<TCache = any>(client: ApolloClient<T
     `;
       const { data } = await client.mutate({
         mutation: QQLQuery,
-        variables: { contacts: selectedContacts },
+        variables: { contacts: selectedContacts, provider },
         context: { fetchOptions: { cache: 'no-store' } },
       })
     return data?.mergeContacts ?? null;
