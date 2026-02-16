@@ -55,14 +55,14 @@ export class SocialAccountsController {
   }
 
 
-  @Get(':provider')
-  async getLinkedinAccount(
-    @Param('provider') provider: string,
-    @Req() request: AuthenticatedRequest,
-    @Query('cursor') cursor?: string,
-  ) {
-    return this.service.getLinkedinAccount(provider, request, cursor);
-  }
+@Get(':provider')
+async getProviderContacts(  // ← Cambiar nombre
+  @Param('provider') provider: string,
+  @Req() request: AuthenticatedRequest,
+  @Query('cursor') cursor?: string,
+) {
+  return this.service.getProviderContacts(provider, request, cursor);  // ← Cambiar llamada
+}
 
   @Delete('disconnect/:provider')
   async disconnectAccount(
@@ -97,5 +97,23 @@ export class SocialAccountsController {
       contactId,
       request.user,
     );
+  }
+
+  @Post('connect/microsoft')
+  async connectMicrosoft(
+    @Req() request: AuthenticatedRequest,
+    @Body() body: { redirectUrl: string },
+  ) {
+    console.log('body.redirectUrl ', body.redirectUrl)
+    const result = await this.service.generateMicrosoftAuthLink(
+      request.user.id,
+      request.workspaceId || '',
+      body.redirectUrl,
+    );
+
+    return {
+      authUrl: result.url,
+      expiresAt: result.expires_at,
+    };
   }
 }

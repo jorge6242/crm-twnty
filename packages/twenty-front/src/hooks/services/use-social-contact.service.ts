@@ -1,6 +1,7 @@
 import { useApolloClient } from '@apollo/client';
 import { useCallback, useMemo } from 'react';
-import { SocialContactList } from '~/pages/integrations/SocialContacts';
+
+import { SocialContactList } from '~/pages/integrations/hooks/useLinkedInContacts';
 import * as svc from '../../services/social-contacts.service';
 
 export function useSocialContactService() {

@@ -1,6 +1,6 @@
 import {
-  SEED_APPLE_WORKSPACE_ID,
-  SEED_YCOMBINATOR_WORKSPACE_ID,
+    SEED_APPLE_WORKSPACE_ID,
+    SEED_YCOMBINATOR_WORKSPACE_ID,
 } from 'src/engine/workspace-manager/dev-seeder/core/constants/seeder-workspaces.constant';
 import { generateRandomUsers } from 'src/engine/workspace-manager/dev-seeder/core/utils/generate-random-users.util';
 import { USER_DATA_SEED_IDS } from 'src/engine/workspace-manager/dev-seeder/core/utils/seed-users.util';
@@ -31,6 +31,8 @@ export const WORKSPACE_MEMBER_DATA_SEED_IDS = {
   JONY: '20202020-77d5-4cb6-b60a-f4a835a85d61',
   PHIL: '20202020-1553-45c6-a028-5a9064cce07f',
   JANE: '20202020-463f-435b-828c-107e007a2711',
+  JORGE: '20202020-d4e5-4f6a-b1c8-4567890123de',
+  SYMBIOSE: '20202020-b8c9-4d0e-f2a3-8901234567bc',
 };
 
 const {
@@ -76,6 +78,24 @@ const originalWorkspaceMembers: WorkspaceMemberDataSeed[] = [
     colorScheme: 'Light',
     userEmail: 'jane.austen@apple.dev',
     userId: USER_DATA_SEED_IDS.JANE,
+  },
+  {
+    id: WORKSPACE_MEMBER_DATA_SEED_IDS.JORGE,
+    nameFirstName: 'Jorge',
+    nameLastName: 'Dev',
+    locale: 'en',
+    colorScheme: 'Light',
+    userEmail: 'jorge@apple.dev',
+    userId: USER_DATA_SEED_IDS.JORGE,
+  },
+  {
+    id: WORKSPACE_MEMBER_DATA_SEED_IDS.SYMBIOSE,
+    nameFirstName: 'Symbiose',
+    nameLastName: 'User',
+    locale: 'en',
+    colorScheme: 'Light',
+    userEmail: 'symbiose@apple.dev',
+    userId: USER_DATA_SEED_IDS.SYMBIOSE,
   },
 ];
 

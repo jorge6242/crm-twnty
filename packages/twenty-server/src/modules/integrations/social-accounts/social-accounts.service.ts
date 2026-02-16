@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -30,6 +30,8 @@ export class SocialAccountsService {
     private readonly unipileService: UnipileService,
     @InjectRepository(LeadUserEntity)
     private readonly leadUserRepository: Repository<LeadUserEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     private readonly createPersonService: CreatePersonService,
     private readonly globalWorkspaceOrmManager: GlobalWorkspaceOrmManager,
   ) {}
@@ -58,8 +60,12 @@ export class SocialAccountsService {
       null;
     const accessToken = '';
 
-    const firstName = authUser?.firstName ?? authUser?.name?.split?.(' ')?.[0] ?? '';
-    const lastName = authUser?.lastName ?? (authUser?.name ? authUser.name.split(' ').slice(1).join(' ') : '') ?? '';
+    const firstName =
+      authUser?.firstName ?? authUser?.name?.split?.(' ')?.[0] ?? '';
+    const lastName =
+      authUser?.lastName ??
+      (authUser?.name ? authUser.name.split(' ').slice(1).join(' ') : '') ??
+      '';
     const email = authUser?.email ?? `${username}@unknown.local`;
 
     if (!workspaceId) {
@@ -76,7 +82,6 @@ export class SocialAccountsService {
       lastName,
     };
 
-
     if (authUser?.id) {
       (leadPayload as any).user = { id: authUser.id };
     }
@@ -88,7 +93,7 @@ export class SocialAccountsService {
 
     return {
       message: (response as any).message ?? 'Account linked successfully',
-      account_id: (saved as any)?.providerAccountId ?? null
+      account_id: (saved as any)?.providerAccountId ?? null,
     };
   }
 
@@ -180,10 +185,19 @@ export class SocialAccountsService {
 
     if (returnedAccountId) {
       // Try to find existing lead by providerAccountId or by user+source
-      let lead = await this.leadUserRepository.findOne({ where: { providerAccountId: accountId } });
+      let lead = await this.leadUserRepository.findOne({
+        where: { providerAccountId: accountId },
+      });
 
-      if (!lead) { lead = await this.leadUserRepository.findOne({ where: { source: LeadSource.LINKEDIN, user: { id: user.id } },}); }
-      if (lead) { lead.providerAccountId = returnedAccountId; await this.leadUserRepository.save(lead); }
+      if (!lead) {
+        lead = await this.leadUserRepository.findOne({
+          where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
+        });
+      }
+      if (lead) {
+        lead.providerAccountId = returnedAccountId;
+        await this.leadUserRepository.save(lead);
+      }
     }
     return {
       message: 'Checkpoint solved',
@@ -191,19 +205,36 @@ export class SocialAccountsService {
     };
   }
 
-  async disconnectAccount(provider: string, user: UserEntity) {
-    const leadUserRes = await this.leadUserRepository.findOne({
-      where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
-    });
-    const accountId = leadUserRes?.providerAccountId ?? '';
-    const res = await this.unipileService.disconnectAccount(accountId);
-    if (res) {
-      if (leadUserRes) {
-        await this.leadUserRepository.remove(leadUserRes);
-      }
-    }
-    return res;
+async disconnectAccount(provider: string, user: UserEntity) {
+  const sourceMap: Record<string, LeadSource> = {
+    'linkedin': LeadSource.LINKEDIN,
+    'email': LeadSource.EMAIL,
+    'microsoft': LeadSource.EMAIL,
+    'outlook': LeadSource.EMAIL,
+  };
+
+  const leadSource = sourceMap[provider.toLowerCase()];
+  if (!leadSource) {
+    throw new BadRequestException(`Provider "${provider}" not supported`);
   }
+
+  const leadUserRes = await this.leadUserRepository.findOne({
+    where: { source: leadSource, user: { id: user.id } },
+  });
+
+  if (!leadUserRes) {
+    throw new BadRequestException(`No ${provider} account found to disconnect`);
+  }
+
+  const accountId = leadUserRes.providerAccountId ?? '';
+  const res = await this.unipileService.disconnectAccount(accountId);
+
+  if (res) {
+    await this.leadUserRepository.remove(leadUserRes);
+  }
+
+  return res;
+}
 
   async mergeContactsToPeople(
     contacts: MergeContactDto[],
@@ -236,9 +267,15 @@ export class SocialAccountsService {
 
           // ... (Rest of the mapping logic remains same, but wrapped in try-catch) ...
           // Using a shorter variable name for brevity in this specific replacement
-          const uniqueCompaniesMap = new Map<string, Partial<CompanyWorkspaceEntity>>();
+          const uniqueCompaniesMap = new Map<
+            string,
+            Partial<CompanyWorkspaceEntity>
+          >();
           newPeoples.forEach((p: any) => {
-            if (p.lastCompany?.name && !uniqueCompaniesMap.has(p.lastCompany.name)) {
+            if (
+              p.lastCompany?.name &&
+              !uniqueCompaniesMap.has(p.lastCompany.name)
+            ) {
               uniqueCompaniesMap.set(p.lastCompany.name, {
                 id: uuidv4(),
                 name: p.lastCompany.name,
@@ -266,18 +303,21 @@ export class SocialAccountsService {
             }
           });
 
-          const companyRepository = await this.globalWorkspaceOrmManager.getRepository(
-            workspaceId,
-            CompanyWorkspaceEntity,
-            { shouldBypassPermissionChecks: true },
-          );
+          const companyRepository =
+            await this.globalWorkspaceOrmManager.getRepository(
+              workspaceId,
+              CompanyWorkspaceEntity,
+              { shouldBypassPermissionChecks: true },
+            );
 
           const uniqueCompanyNames = Array.from(uniqueCompaniesMap.keys());
           const existingCompanies = await companyRepository.find({
-            where: { name: In(uniqueCompanyNames) }
+            where: { name: In(uniqueCompanyNames) },
           });
 
-          const existingCompaniesByName = new Map(existingCompanies.map(c => [c.name, c]));
+          const existingCompaniesByName = new Map(
+            existingCompanies.map((c) => [c.name, c]),
+          );
           const companiesToInsert: any[] = [];
 
           for (const [name, companyData] of uniqueCompaniesMap.entries()) {
@@ -312,13 +352,17 @@ export class SocialAccountsService {
             .map((p: any) => {
               const firstName = p.firstName ?? '';
               const lastName = p.lastName ?? '';
-              const companyId = p.lastCompany?.name ? uniqueCompaniesMap.get(p.lastCompany.name)?.id : null;
+              const companyId = p.lastCompany?.name
+                ? uniqueCompaniesMap.get(p.lastCompany.name)?.id
+                : null;
               return {
                 id: uuidv4(),
                 companyId: companyId,
                 jobTitle: p.lastCompany?.position || null,
                 emails: {
-                  primaryEmail: p.email ? (p.email as string).toLowerCase() : null,
+                  primaryEmail: p.email
+                    ? (p.email as string).toLowerCase()
+                    : null,
                   additionalEmails: null,
                 },
                 city: p.lastCompany?.location || null,
@@ -332,13 +376,14 @@ export class SocialAccountsService {
                   firstName: firstName || null,
                   lastName: lastName || null,
                 },
-                linkedinLink: p.profileUrl || p.publicProfileUrl
-                  ? ({
-                      primaryLinkUrl: p.profileUrl || p.publicProfileUrl,
-                      primaryLinkLabel: null,
-                      secondaryLinks: null,
-                    } as any)
-                  : null,
+                linkedinLink:
+                  p.profileUrl || p.publicProfileUrl
+                    ? ({
+                        primaryLinkUrl: p.profileUrl || p.publicProfileUrl,
+                        primaryLinkLabel: null,
+                        secondaryLinks: null,
+                      } as any)
+                    : null,
                 avatarUrl: p.profilePictureUrl ?? null,
               } as Partial<PersonWorkspaceEntity>;
             });
@@ -349,11 +394,15 @@ export class SocialAccountsService {
             authContext,
           );
 
-          console.log('Merge completed successfully:', created.length, 'people created.');
+          console.log(
+            'Merge completed successfully:',
+            created.length,
+            'people created.',
+          );
 
           return {
             success: true,
-            count: created.length
+            count: created.length,
           };
         } catch (error) {
           console.error('ERROR DETECTADO EN mergeContactsToPeople:', error);
@@ -364,8 +413,7 @@ export class SocialAccountsService {
         }
       },
     );
-}
-
+  }
 
   async getContactDetail(contactId: string, user: UserEntity) {
     const leadUserRes = await this.leadUserRepository.findOne({
@@ -381,4 +429,332 @@ export class SocialAccountsService {
     return this.unipileService.getContactDetail(accountId, contactId);
   }
 
+  async generateMicrosoftAuthLink(
+    userId: string,
+    workspaceId: string,
+    redirectUrl: string,
+  ) {
+    return this.unipileService.generateHostedAuthLink(
+      'MICROSOFT',
+      userId,
+      workspaceId,
+      redirectUrl,
+    );
+  }
+
+  async handleAccountConnected(payload: {
+    account_id: string;
+    custom_id: string;
+    name: string; // userId
+    status: string;
+    AccountStatus: {
+      message: string;
+    };
+  }) {
+    if (payload.status !== 'CREATION_SUCCESS' || !payload.name) {
+      console.log('Account connection not successful or missing user ID');
+      return;
+    }
+
+    const userId = payload.name;
+    const providerAccountId = payload.account_id;
+    const [userIdFromPayload, workspaceId] = userId.split(':');
+    console.log('Handling account connection for user:', userIdFromPayload, 'and workspace:', workspaceId);
+    try {
+      // Obtener el usuario con su workspace
+      const user = await this.userRepository
+        .createQueryBuilder('user')
+        .leftJoinAndSelect('user.userWorkspaces', 'userWorkspace')
+        .leftJoinAndSelect('userWorkspace.workspace', 'workspace')
+        .where('user.id = :userId', { userId: userIdFromPayload })
+        .getOne();
+
+      if (!user || !user.userWorkspaces || user.userWorkspaces.length === 0) {
+        throw new Error('User or workspace not found');
+      }
+
+      // Tomamos el primer workspace del usuario (o podrías tener lógica para elegir uno específico)
+
+
+      // Verificar si ya existe un registro para este usuario y proveedor
+      const existingLead = await this.leadUserRepository.findOne({
+        where: {
+          user: { id: userIdFromPayload },
+          source: LeadSource.EMAIL,
+        },
+      });
+
+      // Obtener detalles de la cuenta desde Unipile para extraer el email y nombre
+      let accountEmail = '';
+      let accountName = '';
+      let firstName = '';
+      let lastName = '';
+      try {
+        const accountDetails = await this.unipileService.getAccountWithProfile(providerAccountId);
+        console.log('Account details from Unipile:', accountDetails);
+
+        // Extraer email y nombre de los detalles de la cuenta
+        accountEmail = accountDetails.email || '';
+        accountName = accountDetails.name || accountDetails.display_name || '';
+        firstName = accountDetails.firstName || '';
+        lastName = accountDetails.lastName || '';
+
+        // Si no tenemos firstName/lastName pero tenemos el nombre completo, separarlo
+        if (!firstName && !lastName && accountName) {
+          const nameParts = accountName.split(' ');
+          firstName = nameParts[0] || '';
+          lastName = nameParts.slice(1).join(' ') || '';
+        }
+
+        if (existingLead) {
+          // Actualizar el registro existente
+          existingLead.providerAccountId = providerAccountId;
+          existingLead.email = accountEmail;
+          existingLead.firstName = firstName;
+          existingLead.lastName = lastName;
+          existingLead.username = accountEmail;
+          existingLead.updatedAt = new Date();
+          await this.leadUserRepository.save(existingLead);
+          console.log('Updated existing Microsoft account connection with email:', accountEmail, 'and name:', accountName);
+        } else {
+          // Crear un nuevo registro con la información real de la cuenta
+          const newLead = this.leadUserRepository.create({
+            source: LeadSource.EMAIL,
+            providerAccountId,
+            user: { id: userIdFromPayload },
+            workspace: { id: workspaceId },
+            firstName,
+            lastName,
+            username: accountEmail,
+            email: accountEmail,
+          });
+          await this.leadUserRepository.save(newLead);
+          console.log('Created new Microsoft account connection with email:', accountEmail, 'and name:', accountName);
+        }
+      } catch (error) {
+        console.error('Error fetching account details from Unipile:', error);
+
+        // Si no podemos obtener los detalles, crear/actualizar con valores vacíos
+        if (existingLead) {
+          existingLead.providerAccountId = providerAccountId;
+          existingLead.updatedAt = new Date();
+          await this.leadUserRepository.save(existingLead);
+          console.log('Updated existing Microsoft account connection (no email retrieved)');
+        } else {
+          const newLead = this.leadUserRepository.create({
+            source: LeadSource.EMAIL,
+            providerAccountId,
+            user: { id: userIdFromPayload },
+            workspace: { id: workspaceId },
+            firstName: '',
+            lastName: '',
+            username: '',
+            email: '',
+          });
+          await this.leadUserRepository.save(newLead);
+          console.log('Created new Microsoft account connection (no email retrieved)');
+        }
+      }
+    } catch (error) {
+      console.error('Error in handleAccountConnected:', error);
+      throw new Error(`Failed to handle account connection: ${error.message}`);
+    }
+  }
+
+  async getProviderContacts(
+    provider: string,
+    authContext: WorkspaceAuthContext,
+    cursor?: string,
+  ) {
+    const { user, workspace } = authContext;
+    const workspaceId = workspace.id;
+
+    const sourceMap: Record<string, LeadSource> = {
+      linkedin: LeadSource.LINKEDIN,
+      email: LeadSource.EMAIL,
+      microsoft: LeadSource.EMAIL,
+      outlook: LeadSource.EMAIL,
+    };
+    console.log('getProviderContacts provider ', provider)
+    const leadSource = sourceMap[provider.toLowerCase()];
+    console.log('getProviderContacts provider ', provider)
+    if (!leadSource) {
+      throw new BadRequestException(`Provider "${provider}" not supported`);
+    }
+
+    const leadUserRes = await this.leadUserRepository.findOne({
+      where: {
+        source: leadSource,
+        user: { id: user.id },
+        workspace: { id: workspaceId },
+      },
+    });
+
+    if (!leadUserRes?.providerAccountId) {
+      console.log(`No lead user found for provider ${provider}`);
+      return {
+        account: null,
+        contacts: [],
+        nextCursor: null,
+      };
+    }
+
+    console.log(`Found lead user for provider ${provider}:`, leadUserRes.id);
+
+    const accountId = leadUserRes.providerAccountId;
+    const cleanCursor =
+      cursor === 'null' || cursor === 'undefined' ? undefined : cursor;
+
+    const unipileRes = await this.unipileService.getAccountContacts(
+      provider,
+      accountId,
+      cleanCursor,
+    );
+
+    if (!unipileRes?.contacts) {
+      // ✅ Retorno consistente incluso si falla
+      return {
+        account: {
+          id: leadUserRes.id,
+          username: leadUserRes.username || leadUserRes.email,
+          provider: leadUserRes.source,
+        },
+        contacts: [],
+        nextCursor: null,
+      };
+    }
+
+    // Marcar duplicados en CRM
+    try {
+      if (provider === 'linkedin') {
+        await this.markLinkedInContactsInCrm(
+          unipileRes,
+          authContext,
+          workspaceId,
+        );
+      } else if (
+        ['email', 'microsoft', 'outlook'].includes(provider.toLowerCase())
+      ) {
+        await this.markMicrosoftContactsInCrm(
+          unipileRes,
+          authContext,
+          workspaceId,
+        );
+      }
+    } catch (error) {
+      console.error('Error checking contact presence in CRM:', error);
+    }
+
+    // ✅ Retorno consistente siempre
+    return {
+      account: {
+        id: leadUserRes.id,
+        username: leadUserRes.username || leadUserRes.email,
+        provider: leadUserRes.source,
+      },
+      contacts: unipileRes.contacts,
+      nextCursor: unipileRes.nextCursor,
+    };
+  }
+
+  /**
+   * Marca contactos de Microsoft que ya existen en CRM por email
+   */
+  private async markMicrosoftContactsInCrm(
+    unipileRes: any,
+    authContext: WorkspaceAuthContext,
+    workspaceId: string,
+  ) {
+    try {
+      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+        authContext,
+        async () => {
+          const emails = unipileRes.contacts
+            .map((c: any) => c.email)
+            .filter(Boolean);
+
+          if (emails.length > 0) {
+            const personRepository =
+              await this.globalWorkspaceOrmManager.getRepository(
+                workspaceId,
+                PersonWorkspaceEntity,
+                { shouldBypassPermissionChecks: true },
+              );
+
+            // Buscar por email principal
+            const existingPeople = await personRepository
+              .createQueryBuilder('person')
+              .where("person.emails->>'primaryEmail' IN (:...emails)", {
+                emails,
+              })
+              .getMany();
+
+            const existingEmailsSet = new Set(
+              existingPeople
+                .map((p) => p.emails?.primaryEmail?.toLowerCase())
+                .filter(Boolean),
+            );
+
+            unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
+              ...contact,
+              isAlreadyInCrm: contact.email
+                ? existingEmailsSet.has(contact.email.toLowerCase())
+                : false,
+            }));
+          }
+        },
+      );
+    } catch (error) {
+      console.error('Error checking Microsoft contacts in CRM:', error);
+    }
+  }
+
+  /**
+   * Marca contactos de LinkedIn que ya existen en CRM (por publicProfileUrl)
+   */
+  private async markLinkedInContactsInCrm(
+    unipileRes: any,
+    authContext: WorkspaceAuthContext,
+    workspaceId: string,
+  ) {
+    try {
+      await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
+        authContext,
+        async () => {
+          const profileUrls = unipileRes.contacts
+            .map((c: any) => c.publicProfileUrl)
+            .filter(Boolean);
+
+          if (profileUrls.length > 0) {
+            const personRepository =
+              await this.globalWorkspaceOrmManager.getRepository(
+                workspaceId,
+                PersonWorkspaceEntity,
+                { shouldBypassPermissionChecks: true },
+              );
+
+            const existingPeople = await personRepository.find({
+              where: {
+                linkedinLink: {
+                  primaryLinkUrl: In(profileUrls),
+                },
+              } as any,
+            });
+
+            const existingUrlsMap = new Map(
+              existingPeople.map((p) => [p.linkedinLink?.primaryLinkUrl, p.id]),
+            );
+
+            unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
+              ...contact,
+              isAlreadyInCrm: existingUrlsMap.has(contact.publicProfileUrl),
+              personId: existingUrlsMap.get(contact.publicProfileUrl) || null,
+            }));
+          }
+        },
+      );
+    } catch (error) {
+      console.error('Error checking LinkedIn contacts in CRM:', error);
+    }
+  }
 }

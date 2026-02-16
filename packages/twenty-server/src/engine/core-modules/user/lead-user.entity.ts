@@ -16,6 +16,7 @@ export enum LeadSource {
   WHATSAPP = 'whatsapp',
   LINKEDIN = 'linkedin',
   EMAIL = 'email',
+  MICROSOFT = 'microsoft',
 }
 
 @Entity({ name: 'lead_user', schema: 'core' })
