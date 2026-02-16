@@ -199,6 +199,7 @@ async getMicrosoftContacts(accountId: string, limit = 50, cursor?: string) {
     const seenEmails = new Set<string>();
     return contacts.reduce((uniqueContacts: any[], contact) => {
       // Get email from the contact
+
       let email = '';
       if (contact.from_attendee?.identifier_type === 'EMAIL_ADDRESS') {
         email = contact.from_attendee.identifier.toLowerCase().trim();
@@ -210,12 +211,21 @@ async getMicrosoftContacts(accountId: string, limit = 50, cursor?: string) {
         return uniqueContacts;
       }
 
+      let contactFirstName = null;
+      let contactLastName = null;
+
+      if(contact.from_attendee?.display_name){
+        const splittedDisplayName = contact.from_attendee?.display_name.split("")
+        contactFirstName = splittedDisplayName?.[0] || null;
+        contactLastName = splittedDisplayName?.[1] || null;
+      }
+
       seenEmails.add(email);
       if (contact.email && contact.firstName !== undefined) {
         uniqueContacts.push({
           id: contact.id,
-          firstName: contact.firstName || null,
-          lastName: contact.lastName || null,
+          firstName: contactFirstName,
+          lastName: contactLastName,
           publicProfileUrl: contact.publicProfileUrl || null,
           profilePictureUrl: contact.profilePictureUrl || null,
           headline: contact.headline || null,
@@ -229,13 +239,12 @@ async getMicrosoftContacts(accountId: string, limit = 50, cursor?: string) {
       // Formato de /users/contacts (contactos reales)
       const currentDisplayName = contact.from_attendee?.display_name || '';
       const displayName = contact.display_name || '';
-      const nameParts = displayName.split(' ');
-      const firstName = contact.first_name || nameParts[0] || currentDisplayName || null;
-      const lastName = contact.last_name || nameParts.slice(1).join(' ') || null;
-
+      const nameParts = currentDisplayName.split(' ');
+      const firstName = nameParts?.[0] || null;
+      const lastName = nameParts?.[1] || null;
       uniqueContacts.push({
         id: contact.id,
-        firstName: firstName || currentDisplayName || null,
+        firstName,
         lastName,
         publicProfileUrl: null,
         profilePictureUrl: null,
@@ -394,24 +403,18 @@ async getAccountContacts(
 
       case 'MICROSOFT':
       case 'OUTLOOK':
-      case 'EMAIL': // Para compatibilidad con tu LeadUser.source
-        // Estrategia de fallback: primero intentar contactos reales, luego emails
+      case 'EMAIL':
         try {
-          // 1. Intentar obtener contactos reales desde /users/contacts
           const contactsResult = await this.getMicrosoftContacts(accountId, 50, cursor);
           if (contactsResult.items && contactsResult.items.length > 0) {
-            // ✅ Contactos reales encontrados, usar estos sin filtrado
-            this.logger.debug(
-              `Found ${contactsResult.items.length} real contacts for account ${accountId}`,
-            );
+            this.logger.debug(`Found ${contactsResult.items.length} real contacts for account ${accountId}`,);
             contactRes = contactsResult;
             providerType = 'MICROSOFT';
           } else {
             // 2. Fallback: usar emails si no hay contactos guardados
-            this.logger.debug(
-              `No real contacts found for account ${accountId}, falling back to emails`,
-            );
+            this.logger.debug(`No real contacts found for account ${accountId}, falling back to emails`);
             contactRes = await this.getMicrosoftEmails(accountId, 50, cursor);
+            console.log('contactRes ', contactRes);
             providerType = 'MICROSOFT';
             // Marcar que estos son emails (necesitarán filtrado)
             (contactRes as any).isFromEmails = true;
@@ -556,6 +559,7 @@ async getAccountContacts(
   async getContactEmail(
     accountId: string,
     contact: MergeContactDto,
+    provider: string
   ): Promise<
     | (MergeContactDto & {
         email: string;
@@ -566,6 +570,19 @@ async getAccountContacts(
     | null
   > {
     try {
+      if(provider === 'email') {
+        return {
+          email: contact.email || '',
+          phone: '',
+          firstName: contact?.firstName || null,
+          lastName: contact?.lastName || null,
+          profilePictureUrl: "",
+          publicProfileUrl: "",
+          profileUrl: '',
+          id: contact.id || '',
+          lastCompany: null,
+        };
+      }
       // This endpoint returns the complete profile.
       const res = await this.http.get<any>(`/users/${contact.id || contact}`, {
         params: { account_id: accountId, linkedin_sections: 'experience' },
@@ -578,9 +595,7 @@ async getAccountContacts(
         lastName: res.data?.last_name || null,
         profilePictureUrl: res.data?.profile_picture_url || null,
         publicProfileUrl: res.data?.public_profile_url || null,
-        profileUrl: res.data?.public_identifier
-          ? `https://www.linkedin.com/in/${res.data?.public_identifier}/`
-          : '',
+        profileUrl: res.data?.public_identifier ? `https://www.linkedin.com/in/${res.data?.public_identifier}/` : '',
         id: contact.id || '',
         lastCompany: lastCompany
           ? {

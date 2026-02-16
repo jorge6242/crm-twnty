@@ -22,7 +22,7 @@ interface LoadingStates {
   connect: boolean;
 }
 
-export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'whatsapp' | 'email' }) => {
+export const useLinkedInContacts = () => {
   const {
     getLinkedinAccountDetails: getLinkedinAccountDetailsApi,
     getLeadUserAccounts: getLeadUserAccountsApi,
@@ -42,6 +42,7 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
   const [approveCode, setApproveCode] = useState<string>('');
   const [selectedAccountDetail, setSelectedAccountDetail] = useState<string | null>(null);
   const [accountDetailList, setAccountDetailList] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("");
 
   // Loading states
   const [loadingStates, setLoadingStates] = useState<LoadingStates>({
@@ -59,8 +60,7 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
     [businessMap]
   );
 
-  const leadAccount = useMemo(() => leadUserSocialAccounts.find((e) => e.source === 'linkedin'),[leadUserSocialAccounts]);
-  const leadEmailAccount = useMemo(() => leadUserSocialAccounts.find((e) => e.source === 'email'),[leadUserSocialAccounts]);
+  const leadAccount = useMemo(() => leadUserSocialAccounts.find((e) => e.source === activeTab),[leadUserSocialAccounts, activeTab]);
 
   // Operations
   const fetchLeadUserAccounts = async () => {
@@ -81,16 +81,24 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
         setLoadingStates((prev) => ({ ...prev, verify: true }));
       }
 
-      const response = await getLinkedinAccountDetailsApi(provider ?? 'linkedin', cursor);
+      const response = await getLinkedinAccountDetailsApi(activeTab ?? 'linkedin', cursor);
       const accountsData = response?.contacts ?? [];
       const newCursor = response?.nextCursor ?? null;
 
       if (accountsData.length) {
-        setContacts((prev) => (cursor ? [...prev, ...accountsData] : accountsData));
+        // Crear Set de emails existentes para búsqueda rápida
+        const existingEmails = new Set(contacts.map(c => c.email).filter(Boolean));
+
+        // Filtrar solo los contactos nuevos que no existen por email
+        const newContactsOnly = accountsData.filter((contact: any) =>
+          !contact.email || !existingEmails.has(contact.email)
+        );
+
+        setContacts((prev) => (cursor ? [...prev, ...newContactsOnly] : newContactsOnly));
         setNextCursor(newCursor);
         setBusinessMap((prev) => {
           const next = { ...prev };
-          accountsData.forEach((acc: any) => {
+          newContactsOnly.forEach((acc: any) => {
             if (!acc?.id) return;
             if (typeof next[acc.id] === 'undefined') next[acc.id] = false;
           });
@@ -129,7 +137,7 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
 
     try {
       setLoadingStates((prev) => ({ ...prev, merge: true }));
-      const res = await storeContactsToPeople({ selectedContacts });
+      const res = await storeContactsToPeople({ selectedContacts, provider: activeTab });
 
       if (res) {
         // Update local state: mark synchronized contacts as already in CRM
@@ -159,7 +167,7 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
   const disconnectAccount = async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, disconnect: true }));
-      const res = await disconnectSocialAccount({ provider });
+      const res = await disconnectSocialAccount({ provider: activeTab });
       if (res) {
         setLoadingStates((prev) => ({ ...prev, disconnect: false }));
         setContacts([]);
@@ -224,23 +232,26 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
     return contact;
   };
 
-  // Initialize on mount
   useEffect(() => {
-    fetchContacts();
-    fetchLeadUserAccounts();
+
+  const handleOAuthCallback = async (): Promise<void> => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const accountId = urlParams.get('account_id');
+      fetchLeadUserAccounts();
+      setActiveTab(accountId ? 'email' : 'linkedin');
+    };
+    handleOAuthCallback();
   }, []);
 
-    // Initialize on mount
+
   useEffect(() => {
     fetchContacts();
-  }, [provider]);
+  }, [activeTab]);
 
   return {
-    // State
     contacts,
     nextCursor,
     leadAccount,
-    leadEmailAccount,
     selectedCount,
     showSyncButton,
     approveCode,
@@ -261,5 +272,8 @@ export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'what
     connectAccount,
     toggleContactSelection,
     fetchContactDetails,
+    setContacts,
+    activeTab,
+    setActiveTab
   };
 };
