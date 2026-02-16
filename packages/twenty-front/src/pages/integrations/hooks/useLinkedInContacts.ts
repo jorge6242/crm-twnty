@@ -5,6 +5,7 @@ export interface SocialContactList {
   id: string;
   firstName: string;
   lastName: string;
+  email?: string;
   profilePictureUrl?: string;
   publicProfileUrl?: string;
   headline?: string;
@@ -21,7 +22,7 @@ interface LoadingStates {
   connect: boolean;
 }
 
-export const useLinkedInContacts = () => {
+export const useLinkedInContacts = ({ provider }: { provider: 'linkedin' | 'whatsapp' | 'email' }) => {
   const {
     getLinkedinAccountDetails: getLinkedinAccountDetailsApi,
     getLeadUserAccounts: getLeadUserAccountsApi,
@@ -58,10 +59,8 @@ export const useLinkedInContacts = () => {
     [businessMap]
   );
 
-  const leadAccount = useMemo(
-    () => leadUserSocialAccounts.find((e) => e.source === 'linkedin'),
-    [leadUserSocialAccounts]
-  );
+  const leadAccount = useMemo(() => leadUserSocialAccounts.find((e) => e.source === 'linkedin'),[leadUserSocialAccounts]);
+  const leadEmailAccount = useMemo(() => leadUserSocialAccounts.find((e) => e.source === 'email'),[leadUserSocialAccounts]);
 
   // Operations
   const fetchLeadUserAccounts = async () => {
@@ -82,7 +81,7 @@ export const useLinkedInContacts = () => {
         setLoadingStates((prev) => ({ ...prev, verify: true }));
       }
 
-      const response = await getLinkedinAccountDetailsApi('linkedin', cursor);
+      const response = await getLinkedinAccountDetailsApi(provider ?? 'linkedin', cursor);
       const accountsData = response?.contacts ?? [];
       const newCursor = response?.nextCursor ?? null;
 
@@ -157,7 +156,7 @@ export const useLinkedInContacts = () => {
     }
   };
 
-  const disconnectAccount = async (provider: string) => {
+  const disconnectAccount = async () => {
     try {
       setLoadingStates((prev) => ({ ...prev, disconnect: true }));
       const res = await disconnectSocialAccount({ provider });
@@ -231,11 +230,17 @@ export const useLinkedInContacts = () => {
     fetchLeadUserAccounts();
   }, []);
 
+    // Initialize on mount
+  useEffect(() => {
+    fetchContacts();
+  }, [provider]);
+
   return {
     // State
     contacts,
     nextCursor,
     leadAccount,
+    leadEmailAccount,
     selectedCount,
     showSyncButton,
     approveCode,

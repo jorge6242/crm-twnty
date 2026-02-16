@@ -1,5 +1,6 @@
 import { ApolloClient, gql } from '@apollo/client';
-import { SocialContactList } from '~/pages/integrations/SocialContacts';
+import { SocialContactList } from '~/pages/integrations/hooks/useLinkedInContacts';
+
 
 export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClient<TCache>, provider = 'linkedin', cursor?: string) {
   const QQLQuery = gql`
@@ -14,6 +15,7 @@ export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClie
           id
           firstName
           lastName
+          email
           publicProfileUrl
           profilePictureUrl
           headline
@@ -183,3 +185,32 @@ export async function getContactDetail<TCache = any>(client: ApolloClient<TCache
     return data?.getContactDetail ?? null;
 }
 
+export async function initiateMicrosoftAuth<TCache = any>(
+  client: ApolloClient<TCache>,
+  redirectUrl: string
+) {
+  const MUTATION = gql`
+    mutation InitiateMicrosoftAuth($input: JSON) {
+      initiateMicrosoftAuth(input: $input) @rest(
+        type: "MicrosoftAuthResponse"
+        path: "/metadata/social-accounts/connect/microsoft"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+        authUrl
+        expiresAt
+      }
+    }
+  `;
+
+  const { data } = await client.mutate({
+    mutation: MUTATION,
+    variables: { input: { redirectUrl } }
+  });
+  const { authUrl } = data.initiateMicrosoftAuth;
+
+  // Redirigir usuario a Unipile Hosted Auth
+  window.location.href = authUrl;
+
+  return data;
+}
