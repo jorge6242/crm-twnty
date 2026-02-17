@@ -2,41 +2,45 @@
 # SECTION 1: INFRASTRUCTURE LAYER (DB & Redis)
 # ==========================================
 
-# Infrastructure Startup (Uses the file in packages/twenty-docker)
+# Infrastructure Startup
 infra-up:
-	docker compose -f packages/twenty-docker/docker-compose.yml up -d db redis
+	docker compose -f docker-compose.dev.yml up -d db redis
 
 # Infrastructure Shutdown
 infra-stop:
-	docker compose -f packages/twenty-docker/docker-compose.yml stop db redis
+	docker compose -f docker-compose.dev.yml stop db redis
 
 
 # ==========================================
 # SECTION 2: APPLICATION LAYER (Docker Dev)
 # ==========================================
 
-# Application Startup (Uses the root directory file)
+# Application Startup
 app-up:
-	docker compose -f docker-compose.dev.yml up -d app
+	docker compose -f docker-compose.dev.yml up -d twenty_app
 
 # Application Shutdown
 app-stop:
-	docker compose -f docker-compose.dev.yml stop app
+	docker compose -f docker-compose.dev.yml stop twenty_app
 
 
 # ==========================================
 # SECTION 3: MASTER COMMANDS
 # ==========================================
 
-# 🚀 SETUP: Initial setup or after a complete reset. Installs dependencies and prepares the DB.
+# 🚀 SETUP: Initial setup or after a complete reset. Cleans, installs dependencies and prepares the DB.
 setup:
+	@echo "🧹 Cleaning up previous containers and volumes..."
+	docker compose -f docker-compose.dev.yml down -v --remove-orphans
+	@echo "🚀 Starting infrastructure containers..."
 	@make infra-up
+	@echo "🚀 Starting application container..."
 	@make app-up
-	@echo "⏳ Waiting 2s for containers to establish connections..."
-	@sleep 2
+	@echo "⏳ Waiting 3s for containers to establish connections..."
+	@sleep 3
 	@echo "📦 Installing dependencies (Monorepo)... This will take a few minutes."
-	docker exec -it twenty-app yarn install --immutable --immutable-cache
-	@echo "🗄️ Initializing the database..."
+	docker exec -it twenty-app yarn install
+	@echo "🗄️ Creating database schema and seeding data..."
 	docker exec -it twenty-app npx nx database:reset twenty-server
 	@echo "✅ Setup complete. You can now run 'make backend' and 'make frontend'."
 
