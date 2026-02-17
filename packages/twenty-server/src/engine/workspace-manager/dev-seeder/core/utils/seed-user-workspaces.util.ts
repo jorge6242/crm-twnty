@@ -19,10 +19,6 @@ export const USER_WORKSPACE_DATA_SEED_IDS = {
   TIM_ACME: '20202020-e10a-4c27-a90b-b08c57b02d44',
   JONY_ACME: '20202020-e10a-4c27-a90b-b08c57b02d45',
   PHIL_ACME: '20202020-e10a-4c27-a90b-b08c57b02d46',
-  JORGE: '20202020-b2c3-4d5e-9f6a-2345678901bc',
-  JORGE_ACME: '20202020-c3d4-4e5f-a0b7-3456789012cd',
-  SYMBIOSE: '20202020-f6a7-4b8c-d3e0-6789012345fa',
-  SYMBIOSE_ACME: '20202020-a7b8-4c9d-e1f2-7890123456ab',
 };
 
 const {
@@ -70,16 +66,6 @@ export const seedUserWorkspaces = async ({
         userId: USER_DATA_SEED_IDS.PHIL,
         workspaceId,
       },
-      {
-        id: USER_WORKSPACE_DATA_SEED_IDS.JORGE,
-        userId: USER_DATA_SEED_IDS.JORGE,
-        workspaceId,
-      },
-      {
-        id: USER_WORKSPACE_DATA_SEED_IDS.SYMBIOSE,
-        userId: USER_DATA_SEED_IDS.SYMBIOSE,
-        workspaceId,
-      },
     ];
 
     userWorkspaces = [...originalUserWorkspaces, ...randomUserWorkspaces];
@@ -105,16 +91,6 @@ export const seedUserWorkspaces = async ({
       {
         id: USER_WORKSPACE_DATA_SEED_IDS.JANE_ACME,
         userId: USER_DATA_SEED_IDS.JANE,
-        workspaceId,
-      },
-      {
-        id: USER_WORKSPACE_DATA_SEED_IDS.JORGE_ACME,
-        userId: USER_DATA_SEED_IDS.JORGE,
-        workspaceId,
-      },
-      {
-        id: USER_WORKSPACE_DATA_SEED_IDS.SYMBIOSE_ACME,
-        userId: USER_DATA_SEED_IDS.SYMBIOSE,
         workspaceId,
       },
     ];

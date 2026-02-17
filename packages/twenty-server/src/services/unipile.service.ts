@@ -720,7 +720,7 @@ async getAccountContacts(
       const res = await this.http.post('/hosted/accounts/link', {
         type: reconnectAccountId ? 'reconnect' : 'create',
         providers: ['OUTLOOK'], // Microsoft Outlook usa OUTLOOK
-        api_url: 'https://api22.unipile.com:15273', // Tu servidor Unipile
+        api_url: 'https://api20.unipile.com:15039', // Tu servidor Unipile
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
