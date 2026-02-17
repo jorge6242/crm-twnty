@@ -1,10 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
-import https from 'https';
-
 import axios, { AxiosError, AxiosInstance } from 'axios';
+import https from 'https';
 import { MergeContactDto } from 'src/modules/integrations/social-accounts/dto/merge-contact.dto';
+import { v4 } from 'uuid';
 
 export interface UnipileAccountResponse {
   id: string;
@@ -190,73 +189,122 @@ async getMicrosoftContacts(accountId: string, limit = 50, cursor?: string) {
   }
 }
 /**
+ * Helper para extraer emails de arrays de attendees de manera consistente
+ * @param {any[]} attendees - Array de attendees (to, reply_to, cc, bcc)
+ * @returns {string[]} Array de emails únicos en minúsculas
+ */
+private extractEmailsFromAttendees(attendees: any[]): string[] {
+  if (!Array.isArray(attendees) || attendees.length === 0) {
+    return [];
+  }
+
+  return attendees
+    .filter(attendee => attendee?.identifier_type === 'EMAIL_ADDRESS' && attendee?.identifier && typeof attendee.identifier === 'string')
+    .map(attendee => attendee.identifier.toLowerCase().trim())
+    .filter(email => email && email.includes('@'));
+}
+
+/**
+ * Filtra emails de sistema y no deseados
+ * @param {string} email - Email a verificar
+ * @returns {boolean} - True si el email es válido (no es de sistema)
+ */
+private isValidContactEmail(email: string): boolean {
+  const systemEmailPatterns = [
+    /noreply@/i,
+    /no-reply@/i,
+    /notification@/i,
+    /donotreply@/i,
+    /do-not-reply@/i,
+    /updates@/i,
+    /friendupdates@/i,
+    /memories@/i,
+    /advertise@/i,
+    /messages-noreply@/i,
+    /account-security@/i,
+    /.*@facebookmail\.com$/i,
+    /.*@accounts\.google\.com$/i,
+    /.*@microsoft\.com$/i,
+    /.*@linkedin\.com$/i,
+    /.*@celimarcasas\.es$/i,
+    /.*@correo\.leroymerlin\.es$/i,
+    /.*@lsclondon\.co\.uk$/i
+  ];
+
+  return !systemEmailPatterns.some(pattern => pattern.test(email));
+}
+
+/**
+ * Extrae nombre y apellido de un display name
+ * @param {string} displayName - Nombre completo a parsear
+ * @returns {object} - {firstName, lastName}
+ */
+private parseDisplayName(displayName: string): { firstName: string | null; lastName: string | null } {
+  if (!displayName || typeof displayName !== 'string') {
+    return { firstName: null, lastName: null };
+  }
+
+  // Si parece un email, no es un nombre válido
+  if (displayName.includes('@')) {
+    const mainEmail = displayName.split('@')?.[0];
+    const splittedEmail = mainEmail.split('_') || mainEmail.split('.');
+    return { firstName: splittedEmail?.[0] || null, lastName: splittedEmail?.[1] || null };
+  }
+
+  const parts = displayName.trim().split(" ");
+  return {
+    firstName: parts?.[0] || null,
+    lastName: parts?.[1] || null,
+  };
+}
+
+/**
  * Mapea contactos de Microsoft al formato estándar
  * Maneja tanto contactos de /users/contacts como emails de /emails
  * @param {any[]} contacts - Contactos crudos de Microsoft Outlook via Unipile
  * @returns {any[]} Contactos mapeados al formato común
  */
-  mapMicrosoftContacts = (contacts: any[]) => {
-    const seenEmails = new Set<string>();
-    return contacts.reduce((uniqueContacts: any[], contact) => {
-      // Get email from the contact
+mapMicrosoftContacts = (contacts: any[]) => {
+  const seenEmails = new Set<string>();
+  return contacts.reduce((uniqueContacts: any[], contact) => {
+    const toEmails = this.extractEmailsFromAttendees(contact?.to_attendees || []);
+    const replyToEmails = this.extractEmailsFromAttendees(contact?.reply_to_attendees || []);
+    // const ccEmails = this.extractEmailsFromAttendees(contact?.cc_attendees || []);
+    // const bccEmails = this.extractEmailsFromAttendees(contact?.bcc_attendees || []);
 
-      let email = '';
-      if (contact.from_attendee?.identifier_type === 'EMAIL_ADDRESS') {
-        email = contact.from_attendee.identifier.toLowerCase().trim();
-      } else if (contact.email) {
-        email = contact.email.toLowerCase().trim();
-      }
+    const allEmails = [...toEmails, ...replyToEmails];
+    const uniqueEmailsInThisContact = [...new Set(allEmails)];
 
-      if (!email || seenEmails.has(email)) {
-        return uniqueContacts;
+    uniqueEmailsInThisContact.forEach(email => {
+      if (!email || seenEmails.has(email) || !this.isValidContactEmail(email)) {
+        return;
       }
+      seenEmails.add(email);
 
       let contactFirstName = null;
       let contactLastName = null;
 
-      if(contact.from_attendee?.display_name){
-        const splittedDisplayName = contact.from_attendee?.display_name.split("")
-        contactFirstName = splittedDisplayName?.[0] || null;
-        contactLastName = splittedDisplayName?.[1] || null;
-      }
+      const allAttendees = [ ...(contact?.to_attendees || []), ...(contact?.reply_to_attendees || []), ...(contact?.cc_attendees || []), ...(contact?.bcc_attendees || [])];
 
-      seenEmails.add(email);
-      if (contact.email && contact.firstName !== undefined) {
-        uniqueContacts.push({
-          id: contact.id,
-          firstName: contactFirstName,
-          lastName: contactLastName,
-          publicProfileUrl: contact.publicProfileUrl || null,
-          profilePictureUrl: contact.profilePictureUrl || null,
-          headline: contact.headline || null,
-          email: contact.email,
-          phone: contact.phone || null,
-          companyName: contact.companyName || null,
-        });
-        return uniqueContacts;
-      }
-
-      // Formato de /users/contacts (contactos reales)
-      const currentDisplayName = contact.from_attendee?.display_name || '';
-      const displayName = contact.display_name || '';
-      const nameParts = currentDisplayName.split(' ');
-      const firstName = nameParts?.[0] || null;
-      const lastName = nameParts?.[1] || null;
+      const matchingAttendee = allAttendees.find(attendee => attendee?.identifier_type === 'EMAIL_ADDRESS' && attendee?.identifier?.toLowerCase() === email);
+      const parsed = this.parseDisplayName(matchingAttendee?.display_name);
+      contactFirstName = parsed.firstName;
+      contactLastName = parsed.lastName;
       uniqueContacts.push({
-        id: contact.id,
-        firstName,
-        lastName,
-        publicProfileUrl: null,
-        profilePictureUrl: null,
-        headline: contact.job_title || null,
+        id: v4(), // ID único basado en email
+        firstName: contactFirstName,
+        lastName: contactLastName,
+        publicProfileUrl: contact.publicProfileUrl || null,
+        profilePictureUrl: contact.profilePictureUrl || null,
+        headline: contact.headline || contact.job_title || null,
         email: email,
-        phone: contact.phone_number || contact.mobile_phone || null,
-        companyName: contact.company_name || null,
+        phone: contact.phone || contact.phone_number || contact.mobile_phone || null,
+        companyName: contact.companyName || contact.company_name || null,
       });
-
-      return uniqueContacts;
-    }, []);
-  };
+    });
+    return uniqueContacts;
+  }, []);
+};
 
 
   async getLinkedinConnections(accountId: string, limit = 50, cursor?: string) {
@@ -414,7 +462,6 @@ async getAccountContacts(
             // 2. Fallback: usar emails si no hay contactos guardados
             this.logger.debug(`No real contacts found for account ${accountId}, falling back to emails`);
             contactRes = await this.getMicrosoftEmails(accountId, 50, cursor);
-            console.log('contactRes ', contactRes);
             providerType = 'MICROSOFT';
             // Marcar que estos son emails (necesitarán filtrado)
             (contactRes as any).isFromEmails = true;
@@ -677,11 +724,11 @@ async getAccountContacts(
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
-        notify_url: `https://7ad5-77-71-156-184.ngrok-free.app/webhooks/unipile`,
+        notify_url: `https://e727-77-71-156-184.ngrok-free.app/webhooks/unipile`,
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente
-        scopes: 'User.Read Mail.Read Contacts.Read offline_access',  // Añadido más permisos
+        scopes: 'User.Read Mail.Read Contacts.Read',  // Removido offline_access para evitar admin approval
         ...(reconnectAccountId && { reconnect_account: reconnectAccountId }),
       });
       console.log('res generateHostedAuthLink', res.data);
