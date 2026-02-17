@@ -1,7 +1,7 @@
 name: twenty-dev
 
 services:
-  app:
+  twenty_app:
     build:
       context: .
       dockerfile: Dockerfile.dev
@@ -17,10 +17,53 @@ services:
     environment:
       - NODE_ENV=development
       - NODE_OPTIONS=--max-old-space-size=8192
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - twenty_default
     command: tail -f /dev/null
 
+  db:
+    image: postgres:16
+    container_name: twenty_postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${PG_DATABASE_NAME:-default}
+      POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD:-postgres}
+      POSTGRES_USER: ${PG_DATABASE_USER:-postgres}
+    healthcheck:
+      test: pg_isready -U ${PG_DATABASE_USER:-postgres} -h localhost -d postgres
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+    networks:
+      - twenty_default
+
+  redis:
+    image: redis
+    container_name: twenty_redis
+    ports:
+      - "6380:6379"
+    restart: always
+    command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - twenty_default
+
 networks:
   twenty_default:
     external: true
+
+volumes:
+  db-data:

@@ -724,7 +724,7 @@ async getAccountContacts(
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
-        notify_url: `https://e727-77-71-156-184.ngrok-free.app/webhooks/unipile`,
+        notify_url: `https://6833-77-71-156-184.ngrok-free.app/webhooks/unipile`,
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente
