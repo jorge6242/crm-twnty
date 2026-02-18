@@ -680,7 +680,7 @@ async getAccountContacts(
 
       const lastCompany = res.data?.work_experience?.[0] || null;
 
-      console.log('res getContactDetail', res.data);
+      this.logger.verbose('res getContactDetail', res.data);
 
       return {
         email: res.data?.contact_info?.emails?.[0] || '',
@@ -714,13 +714,14 @@ async getAccountContacts(
     redirectUrl: string,
     reconnectAccountId?: string,
   ): Promise<{ url: string; expires_at: string } | string> {
-    console.log('generateHostedAuthLink', provider, userId, redirectUrl, reconnectAccountId);
+    this.logger.verbose('generateHostedAuthLink', provider, userId, redirectUrl, reconnectAccountId);
     const userAndWorkspaceInfo = `${userId}:${workspaceId}`;
     try {
-      const res = await this.http.post('/hosted/accounts/link', {
+      const requestBody = {
         type: reconnectAccountId ? 'reconnect' : 'create',
         providers: ['OUTLOOK'], // Microsoft Outlook usa OUTLOOK
         api_url: 'https://api20.unipile.com:15039', // Tu servidor Unipile
+        client_id: 'f5b27453-3d1a-4c0d-b60d-0c51842135d0', // TU Application ID correcto
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
@@ -728,10 +729,13 @@ async getAccountContacts(
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente
-        scopes: 'User.Read Mail.Read Contacts.Read',  // Removido offline_access para evitar admin approval
+        scopes: 'User.Read Mail.Read Contacts.Read offline_access',  // Removido offline_access para evitar admin approval
+        tenant_id: '479a58aa-145f-4e76-97a5-515e763b24f8', // Tu Tenant ID específico
         ...(reconnectAccountId && { reconnect_account: reconnectAccountId }),
-      });
-      console.log('res generateHostedAuthLink', res.data);
+      };
+      this.logger.verbose('Request body being sent to Unipile:', JSON.stringify(requestBody, null, 2));
+      const res = await this.http.post('/hosted/accounts/link', requestBody);
+      this.logger.verbose('res generateHostedAuthLink', res.data);
       return res.data;
     } catch (error) {
       this.logger.error(`Failed to generate hosted auth link for ${userId}`, error);
