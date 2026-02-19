@@ -21,11 +21,11 @@ interface TabContentProps {
   leadAccount: any;
   contactLabel: string;
   label: string;
+  refresh?: (() => void) | null;
 }
 
 
-export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoading, leadAccount, selectedCount, disconnectAccount, mergeSelectedContacts, toggleContactSelection, fetchContactDetails, accountDetailList, businessMap, selectedAccountDetail, nextCursor, loadMoreContacts }: TabContentProps) => {
-console.log('isLoading' , isLoading);
+export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoading, leadAccount, selectedCount, disconnectAccount, mergeSelectedContacts, toggleContactSelection, fetchContactDetails, accountDetailList, businessMap, selectedAccountDetail, nextCursor, loadMoreContacts, refresh }: TabContentProps) => {
   if (isLoading.verify) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
@@ -33,36 +33,40 @@ console.log('isLoading' , isLoading);
       </div>
     );
   }
-
   return (
     <div>
             {contacts.length && (
                 <S.BodyContactContainer>
                   <S.BodyContactDetails>
-                    <div>
+                    <S.BodyContactDetails2>
                       <S.SectionTitle>Account Details</S.SectionTitle>
-                      <S.SectionSubtitle>
-                        Username:
-                        {leadAccount?.username ?? ''}
-                      </S.SectionSubtitle>
+                      <S.SectionSubtitle> Username: {leadAccount?.username ?? ''}</S.SectionSubtitle>
+                    </S.BodyContactDetails2>
+                    <S.StyledActionButtons>
                       <Button
                         isLoading={isLoading.disconnect}
                         title="Disconnect Account"
                         onClick={() => disconnectAccount()}
                       />
-                    </div>
-                    {selectedCount > 0 && (
-                      <div>
-                        <Button
-                          isLoading={isLoading.merge}
-                          title={`Merge ${selectedCount} Contacts to People`}
-                          onClick={() => mergeSelectedContacts()}
-                        />
-                      </div>
-                    )}
+                      {refresh && (
+                        <div>
+                          <Button
+                            title="Refresh"
+                            onClick={() => refresh()}
+                          />
+                        </div>
+                      )}
+                    <Button
+                      isLoading={isLoading.merge}
+                      title={`Merge ${selectedCount} Contacts to People`}
+                      onClick={() => mergeSelectedContacts()}
+                      disabled={selectedCount === 0}
+                    />
+                    </S.StyledActionButtons>
+
                   </S.BodyContactDetails>
 
-                  <div>
+                  <S.BodyContactDetailsContainer>
                     <S.ContactList role="list" aria-label={label}>
                       {contacts.map((account) => (
                         <SocialContactListItem
@@ -87,7 +91,7 @@ console.log('isLoading' , isLoading);
                         />
                       </div>
                     )}
-                  </div>
+                  </S.BodyContactDetailsContainer>
                 </S.BodyContactContainer>
               )}
     </div>

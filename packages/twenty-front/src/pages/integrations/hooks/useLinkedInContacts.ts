@@ -6,6 +6,7 @@ export interface SocialContactList {
   firstName: string;
   lastName: string;
   email?: string;
+  phone?: string;
   profilePictureUrl?: string;
   publicProfileUrl?: string;
   headline?: string;
@@ -74,6 +75,8 @@ export const useLinkedInContacts = () => {
   };
 
   const fetchContacts = async (cursor?: string) => {
+    console.log('activeTab ', activeTab);
+    console.log('cursor ', cursor);
     try {
       if (cursor) {
         setLoadingStates((prev) => ({ ...prev, loadMore: true }));
@@ -106,6 +109,7 @@ export const useLinkedInContacts = () => {
         });
         setShowSyncButton(true);
       } else if (!cursor) {
+        setContacts([]);
         setShowSyncButton(false);
       }
 
@@ -274,6 +278,7 @@ export const useLinkedInContacts = () => {
     fetchContactDetails,
     setContacts,
     activeTab,
-    setActiveTab
+    setActiveTab,
+    fetchLeadUserAccounts
   };
 };
