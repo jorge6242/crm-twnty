@@ -1,5 +1,6 @@
 import { Button } from 'twenty-ui/input';
 import { SocialContactsTabContent } from '~/pages/integrations/components/social-contact-tab-content';
+import { WhatsAppConnectButton } from '~/pages/integrations/components/WhatsAppConnectButton';
 import { useMicrosoftEmail } from '~/pages/integrations/hooks/useMicrosoftEmail';
 import LinkedInConnectForm from '~/pages/integrations/LinkedInConnectForm';
 import { useLinkedInContacts } from './hooks/useLinkedInContacts';
@@ -27,6 +28,7 @@ export const SocialContacts = () => {
     fetchContactDetails,
     activeTab,
     setActiveTab,
+    fetchLeadUserAccounts,
   } = useLinkedInContacts();
 
   const {
@@ -34,7 +36,6 @@ export const SocialContacts = () => {
     isLoading: isMicrosoftLoading,
     connectMicrosoft,
   } = useMicrosoftEmail();
-
   return (
     <S.StyledContainer>
       <S.StyledCardWrapper>
@@ -139,9 +140,28 @@ export const SocialContacts = () => {
           )}
 
           {activeTab === 'whatsapp' && (
-            <S.StyledMessage>
-              WhatsApp — Demo mode: integration coming soon.
-            </S.StyledMessage>
+            <>
+                 {!contacts.length ? <WhatsAppConnectButton fetchContacts={fetchContacts} fetchLeadUserAccounts={fetchLeadUserAccounts} /> : (
+                  <SocialContactsTabContent
+                    contacts={contacts}
+                    isLoading={isLoading}
+                    leadAccount={leadAccount}
+                    selectedCount={selectedCount}
+                    disconnectAccount={disconnectAccount}
+                    mergeSelectedContacts={mergeSelectedContacts}
+                    toggleContactSelection={toggleContactSelection}
+                    fetchContactDetails={null}
+                    accountDetailList={accountDetailList}
+                    businessMap={businessMap}
+                    selectedAccountDetail={selectedAccountDetail}
+                    nextCursor={nextCursor}
+                    loadMoreContacts={loadMoreContacts}
+                    contactLabel="WhatsApp contact"
+                    label="WhatsApp contacts"
+                    refresh={fetchContacts}
+                  />
+                )}
+            </>
           )}
 
           {activeTab === 'email' && (

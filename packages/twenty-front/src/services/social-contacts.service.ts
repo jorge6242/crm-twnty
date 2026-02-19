@@ -16,6 +16,7 @@ export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClie
           firstName
           lastName
           email
+          phone
           publicProfileUrl
           profilePictureUrl
           headline
@@ -152,7 +153,11 @@ export async function storeContactsToPeople<TCache = any>(client: ApolloClient<T
 
 export async function getContactDetail<TCache = any>(client: ApolloClient<TCache>, payload: { contactId: string, accountId: string}) {
     const { contactId, accountId } = payload;
-    const QQLQuery = gql`
+    // Limpiar el contactId eliminando slashes al final
+    const cleanContactId = contactId.replace(/\/+$/, '');
+    const cleanAccountId = accountId.replace(/\/+$/, '');
+
+    const QGLQuery = gql`
       query GetContactDetail($contactId: String!, $accountId: String!) {
         getContactDetail(contactId: $contactId, accountId: $accountId)
           @rest(
@@ -178,8 +183,8 @@ export async function getContactDetail<TCache = any>(client: ApolloClient<TCache
       }
     `;
       const { data } = await client.query({
-        query: QQLQuery,
-        variables: { contactId, accountId },
+        query: QGLQuery,
+        variables: { contactId: cleanContactId, accountId: cleanAccountId },
         context: { fetchOptions: { cache: 'no-store' } },
       })
     return data?.getContactDetail ?? null;
@@ -213,4 +218,55 @@ export async function initiateMicrosoftAuth<TCache = any>(
   window.location.href = authUrl;
 
   return data;
+}
+
+export async function initiateWhatsAppAuth<TCache = any>(client: ApolloClient<TCache>) {
+  const MUTATION = gql`
+    mutation InitiateWhatsAppAuth($input: JSON) {
+      initiateWhatsAppAuth(input: $input) @rest(
+        type: "WhatsAppAuthResponse"
+        path: "/metadata/social-accounts/connect/whatsapp"
+        method: "POST"
+        bodyKey: "input"
+      ) {
+        success
+        qrCodeUrl
+        verificationCode
+        message
+      }
+    }
+  `;
+
+  const { data } = await client.mutate({
+    mutation: MUTATION,
+    variables: { input: {} },
+    context: { fetchOptions: { cache: 'no-store' } },
+  });
+
+  return data?.initiateWhatsAppAuth ?? null;
+}
+
+export async function checkWhatsAppAuthStatus<TCache = any>(client: ApolloClient<TCache>, verificationCode: string) {
+  const QUERY = gql`
+    query CheckWhatsAppAuthStatus($verificationCode: String!) {
+      checkWhatsAppAuthStatus(verificationCode: $verificationCode) @rest(
+        type: "WhatsAppAuthStatusResponse"
+        path: "/metadata/social-accounts/whatsapp/status/{args.verificationCode}"
+        method: "GET"
+      ) {
+        success
+        status
+        message
+      }
+    }
+  `;
+
+  const { data } = await client.query({
+    query: QUERY,
+    variables: { verificationCode },
+    fetchPolicy: 'network-only',
+    context: { fetchOptions: { cache: 'no-store' } },
+  });
+
+  return data?.checkWhatsAppAuthStatus ?? null;
 }

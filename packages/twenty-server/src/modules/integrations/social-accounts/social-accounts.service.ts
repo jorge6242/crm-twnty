@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -26,6 +26,7 @@ import { UnipileService } from 'src/services/unipile.service';
 
 @Injectable()
 export class SocialAccountsService {
+  private readonly logger = new Logger(SocialAccountsService.name);
   constructor(
     private readonly unipileService: UnipileService,
     @InjectRepository(LeadUserEntity)
@@ -106,13 +107,13 @@ export class SocialAccountsService {
     const workspaceId = workspace.id;
 
     const leadUserRes = await this.leadUserRepository.findOne({
-      where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
+      where: { source: LeadSource.LINKEDIN, user: { id: user?.id } },
     });
 
     if (leadUserRes) {
-      console.log('Found lead user for provider ', provider, leadUserRes);
+      this.logger.log('Found lead user for provider ', provider, leadUserRes);
     } else {
-      console.log('No lead user found for provider ', provider);
+      this.logger.log('No lead user found for provider ', provider);
     }
     const accountId = leadUserRes?.providerAccountId ?? '';
     const cleanCursor =
@@ -163,7 +164,7 @@ export class SocialAccountsService {
         },
       );
     } catch (error) {
-      console.error('Error checking contact presence in CRM:', error);
+      this.logger.error('Error checking contact presence in CRM:', error);
       // We don't want to break the whole list if the lookup fails
     }
 
@@ -211,6 +212,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
     'email': LeadSource.EMAIL,
     'microsoft': LeadSource.EMAIL,
     'outlook': LeadSource.EMAIL,
+    'whatsapp': LeadSource.WHATSAPP,
   };
 
   const leadSource = sourceMap[provider.toLowerCase()];
@@ -248,6 +250,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
       'linkedin': LeadSource.LINKEDIN,
       'email': LeadSource.EMAIL,
       'microsoft': LeadSource.EMAIL,
+      'whatsapp': LeadSource.WHATSAPP,
     };
 
     const leadSource = sourceMap[provider.toLowerCase()];
@@ -453,6 +456,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
       message: string;
     };
   }) {
+    console.log('payload ', payload);
     if (payload.status !== 'CREATION_SUCCESS' || !payload.name) {
       console.log('Account connection not successful or missing user ID');
       return;
@@ -575,9 +579,11 @@ async disconnectAccount(provider: string, user: UserEntity) {
       linkedin: LeadSource.LINKEDIN,
       email: LeadSource.EMAIL,
       microsoft: LeadSource.EMAIL,
+      whatsapp: LeadSource.WHATSAPP,
       outlook: LeadSource.EMAIL,
     };
     const leadSource = sourceMap[provider.toLowerCase()];
+    console.log('leadSource ', leadSource);
     if (!leadSource) {
       throw new BadRequestException(`Provider "${provider}" not supported`);
     }
@@ -585,7 +591,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
     const leadUserRes = await this.leadUserRepository.findOne({
       where: {
         source: leadSource,
-        user: { id: user.id },
+        user: { id: user?.id },
         workspace: { id: workspaceId },
       },
     });
@@ -740,6 +746,94 @@ async disconnectAccount(provider: string, user: UserEntity) {
       );
     } catch (error) {
       console.error('Error checking LinkedIn contacts in CRM:', error);
+    }
+  }
+
+  async initiateWhatsAppAuth(user: UserEntity, workspaceId: string) {
+    try {
+      const { qrCodeString, code } = await this.unipileService.connectWhatsApp();
+
+      // Validar que recibimos un QR code válido
+      if (!qrCodeString || qrCodeString.trim() === '') {
+        throw new Error('No QR code received from Unipile');
+      }
+
+      console.log('QR Code received from Unipile:', qrCodeString?.substring(0, 50) + '...');
+      console.log('Verification code received:', code);
+
+      // Generar imagen QR a partir del string
+      const QRCode = require('qrcode');
+      const qrCodeUrl = await QRCode.toDataURL(qrCodeString);
+
+      // Guardar el código de verificación para este usuario
+      const existingLead = await this.leadUserRepository.findOne({
+        where: {
+          user: { id: user.id },
+          source: LeadSource.WHATSAPP,
+        },
+      });
+
+      if (existingLead) {
+        // Actualizar el registro existente con el nuevo código de verificación
+        existingLead.username = code;
+        await this.leadUserRepository.save(existingLead);
+      } else {
+        // Crear un nuevo registro para WhatsApp
+        const newLead = this.leadUserRepository.create({
+          source: LeadSource.WHATSAPP,
+          user: { id: user.id },
+          workspace: { id: workspaceId },
+          username: code,
+          firstName: 'WhatsApp',
+          lastName: 'Account',
+          email: `${code}@whatsapp.local`,
+          providerAccountId: code,
+        });
+        await this.leadUserRepository.save(newLead);
+      }
+
+      return {
+        qrCodeUrl,
+        verificationCode: code,
+      };
+    } catch (error) {
+      console.error('Error initiating WhatsApp auth:', error);
+      throw new Error('Error al generar el código QR de WhatsApp');
+    }
+  }
+
+  async checkWhatsAppAuthStatus(verificationCode: string, user: UserEntity) {
+    try {
+      // Buscar el registro con el código de verificación
+      const leadUser = await this.leadUserRepository.findOne({
+        where: {
+          user: { id: user.id },
+          username: verificationCode,
+          source: LeadSource.WHATSAPP,
+        },
+      });
+
+      if (!leadUser) {
+        throw new Error('Verification code not found');
+      }
+
+      // Verificar el estado con Unipile
+      const check = await this.unipileService.checkWhatsAppAuthStatus(verificationCode);
+      console.log('status ', check.status);
+      if (check.status === 'OK') {
+        // Actualizar el registro con el nombre real del teléfono
+        if (check.name) {
+          leadUser.username = check.name;
+          await this.leadUserRepository.save(leadUser);
+          console.log('Updated leadUser name:', check.name);
+        }
+        console.log('WhatsApp connected successfully for user:', user.id);
+      }
+
+      return check.status;
+    } catch (error) {
+      console.error('Error checking WhatsApp auth status:', error);
+      throw new Error('Error al verificar el estado de autenticación');
     }
   }
 }

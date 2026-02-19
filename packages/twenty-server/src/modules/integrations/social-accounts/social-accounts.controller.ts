@@ -117,4 +117,49 @@ async getProviderContacts(  // ← Cambiar nombre
       expiresAt: result.expires_at,
     };
   }
+
+  @Post('connect/whatsapp')
+  async initiateWhatsAppAuth(@Req() request: AuthenticatedRequest) {
+    try {
+      const workspaceId = request.workspaceId || '';
+      const result = await this.service.initiateWhatsAppAuth(
+        request.user,
+        workspaceId,
+      );
+
+      return {
+        success: true,
+        qrCodeUrl: result.qrCodeUrl,
+        verificationCode: result.verificationCode,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Error al generar el código QR de WhatsApp',
+      };
+    }
+  }
+
+  @Get('whatsapp/status/:verificationCode')
+  async checkWhatsAppAuthStatus(
+    @Param('verificationCode') verificationCode: string,
+    @Req() request: AuthenticatedRequest,
+  ) {
+    try {
+      const status = await this.service.checkWhatsAppAuthStatus(
+        verificationCode,
+        request.user,
+      );
+
+      return {
+        success: true,
+        status,
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Error al verificar el estado de autenticación',
+      };
+    }
+  }
 }

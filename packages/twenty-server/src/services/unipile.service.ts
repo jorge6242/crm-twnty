@@ -45,6 +45,49 @@ export class UnipileService {
     return res.data;
   }
 
+  async connectWhatsApp(): Promise<{ qrCodeString: string; code: string }> {
+    try {
+      // Try WhatsApp-specific endpoint first
+      let res;
+      try {
+        res = await this.http.post<{ qr_code: string; account_id: string }>('/accounts/whatsapp', {
+          provider: 'WHATSAPP',
+        });
+        this.logger.debug('Using WhatsApp-specific endpoint');
+      } catch (whatsappError) {
+        this.logger.debug('WhatsApp-specific endpoint failed, trying generic /accounts endpoint', whatsappError);
+        res = await this.http.post<{ qr_code: string; account_id: string }>('/accounts', {
+          provider: 'WHATSAPP',
+        });
+      }
+
+      this.logger.debug('Unipile WhatsApp connect response:', JSON.stringify(res.data, null, 2));
+
+      // Check for QR code in different possible locations
+      let qrCodeField = res.data.qr_code || res.data.qrCode || res.data.qr;
+
+      // Check nested structure (Checkpoint response)
+      if (res.data.checkpoint && res.data.checkpoint.qrcode) {
+        qrCodeField = res.data.checkpoint.qrcode;
+      }
+
+      const accountIdField = res.data.account_id || res.data.accountId || res.data.id;
+
+      if (!qrCodeField) {
+        this.logger.error('No QR code field found in WhatsApp connect response:', res.data);
+        throw new Error('No QR code received from Unipile API');
+      }
+
+      return {
+        qrCodeString: qrCodeField,
+        code: accountIdField || 'unknown',
+      };
+    } catch (error) {
+      this.logger.error('UnipileService connectWhatsApp error', error);
+      throw error;
+    }
+  }
+
 
 
   async getAccountDetails(accountId: string) {
@@ -188,7 +231,60 @@ async getMicrosoftContacts(accountId: string, limit = 50, cursor?: string) {
     throw err;
   }
 }
-/**
+
+  /**
+   * Obtiene contactos de WhatsApp usando Unipile API
+   * @param {string} accountId - ID de cuenta WhatsApp en Unipile
+   * @param {number} limit - Limite de contactos por pagina
+   * @param {string} [cursor] - Cursor de paginacion
+   * @returns {Promise<{items: any[], cursor?: string}>}
+   */
+  async getWhatsAppContacts(accountId: string, limit = 50, cursor?: string) {
+    try {
+      const params: any = { account_id: accountId, limit };
+      if (cursor) params.cursor = cursor;
+
+      // Para WhatsApp, obtener los chats y luego extraer los attendees como contactos
+      const chatsRes = await this.http.get('/chat_attendees', { params });
+      this.logger.debug('WhatsApp chats response:', chatsRes.data);
+
+      const contacts = [];
+      const seenContacts = new Set();
+      // Extraer attendees unicos de los chats
+      if (chatsRes.data.items && Array.isArray(chatsRes.data.items)) {
+        for (const chat of chatsRes.data.items) {
+              const contactKey = chat.id;
+              if (!seenContacts.has(contactKey)) {
+                seenContacts.add(contactKey);
+                contacts.push({
+                  id: chat.id,
+                  provider_id: chat.provider_id,
+                  name: chat.name || 'Unknow name',
+                  phone: chat?.specifics?.phone_number || '',
+                  type: chat?.specifics?.provider || '',
+                  email: null,
+                });
+              }
+        }
+      }
+      return {
+        items: contacts.slice(0, limit),
+        cursor: chatsRes.data.cursor || null
+      };
+    } catch (err: any) {
+      this.logger.error('UnipileService getWhatsAppContacts error', err?.response?.data || err);
+
+      // Si Unipile devuelve 422 -> cuenta no disenada para este feature
+      if (err?.response?.status === 422) {
+        this.logger.warn(`WhatsApp account ${accountId} does not support contacts feature`);
+        return { items: [], cursor: null };
+      }
+
+      throw err;
+    }
+  }
+
+  /**
  * Helper para extraer emails de arrays de attendees de manera consistente
  * @param {any[]} attendees - Array de attendees (to, reply_to, cc, bcc)
  * @returns {string[]} Array de emails únicos en minúsculas
@@ -306,6 +402,19 @@ mapMicrosoftContacts = (contacts: any[]) => {
   }, []);
 };
 
+mapWhatsAppContacts(contacts: any[]) {
+  return contacts.map(contact => ({
+    id: contact.id,
+    firstName: contact.name,
+    lastName: null,
+    publicProfileUrl: null,
+    profilePictureUrl: null,
+    headline: null,
+    email: contact.email,
+    phone: contact.phone,
+    companyName: null,
+  }));
+}
 
   async getLinkedinConnections(accountId: string, limit = 50, cursor?: string) {
     this.logger.debug(
@@ -421,6 +530,8 @@ mapMicrosoftContacts = (contacts: any[]) => {
       case 'MICROSOFT':
       case 'OUTLOOK':
         return this.mapMicrosoftContacts(contacts);
+      case 'WHATSAPP':
+        return this.mapWhatsAppContacts(contacts);
       default:
         return [];
     }
@@ -463,7 +574,7 @@ async getAccountContacts(
             this.logger.debug(`No real contacts found for account ${accountId}, falling back to emails`);
             contactRes = await this.getMicrosoftEmails(accountId, 50, cursor);
             providerType = 'MICROSOFT';
-            // Marcar que estos son emails (necesitarán filtrado)
+            // Marcar que estos son emails (necesitaran filtrado)
             (contactRes as any).isFromEmails = true;
           }
         } catch (contactsError) {
@@ -478,6 +589,11 @@ async getAccountContacts(
         }
         break;
 
+      case 'WHATSAPP':
+        contactRes = await this.getWhatsAppContacts(accountId, 50, cursor);
+        providerType = 'WHATSAPP';
+        break;
+
       default:
         throw new Error(`Provider "${provider}" not supported`);
     }
@@ -487,15 +603,10 @@ async getAccountContacts(
       type: providerType,
     });
 
-    // Filtrar correos automáticos solo cuando se usan emails como fallback
+    // Filtrar correos automaticos solo cuando se usan emails como fallback
     // Los contactos reales de /users/contacts no necesitan filtrado
-    const filteredContacts =
-      providerType === 'MICROSOFT' && (contactRes as any).isFromEmails
-        ? mappedContacts.filter(
-            (contact: any) =>
-              !this.isAutomatedEmail(contact.email, contact.firstName),
-          )
-        : mappedContacts;
+    const filteredContacts = providerType === 'MICROSOFT' && (contactRes as any).isFromEmails ? mappedContacts.filter(
+            (contact: any) => !this.isAutomatedEmail(contact.email, contact.firstName)) : mappedContacts;
 
     return {
       contacts: filteredContacts,
@@ -707,13 +818,31 @@ async getAccountContacts(
     }
   }
 
+  async checkWhatsAppAuthStatus(verificationCode: string): Promise<{ status: string; name: string }> {
+    try {
+      // Check the account status using the verification code as account identifier
+      const res = await this.http.get(`/accounts/${encodeURIComponent(verificationCode)}`);
+      console.log('res?.data ', res?.data);
+      console.log('res?.data?.sources ', res?.data?.sources);
+      return { status: res.data?.sources?.[0]?.status || 'unknown', name: res.data?.name || '' };
+    } catch (error) {
+      this.logger.error('UnipileService checkWhatsAppAuthStatus error', error);
+      // If account not found, return 'not_found' or similar
+      if (error instanceof AxiosError && error.response?.status === 404) {
+        return { status: 'not_found', name: '' };
+      }
+
+      throw error;
+    }
+  }
+
   async generateHostedAuthLink(
     provider: 'MICROSOFT',
     userId: string,
     workspaceId: string,
     redirectUrl: string,
     reconnectAccountId?: string,
-  ): Promise<{ url: string; expires_at: string } | string> {
+  ): Promise<{ url: string; expires_at: string }> {
     this.logger.verbose('generateHostedAuthLink', provider, userId, redirectUrl, reconnectAccountId);
     const userAndWorkspaceInfo = `${userId}:${workspaceId}`;
     try {
@@ -739,7 +868,7 @@ async getAccountContacts(
       return res.data;
     } catch (error) {
       this.logger.error(`Failed to generate hosted auth link for ${userId}`, error);
-      return "";
+      throw error;
     }
   }
 

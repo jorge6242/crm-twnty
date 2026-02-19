@@ -78,6 +78,11 @@ export const SocialContactListItem = ({
         <S.Name>{displayName}</S.Name>
         <S.Headline>{contact.headline}</S.Headline>
         {
+          contact?.phone && (
+            <S.Headline>{contact.phone}</S.Headline>
+          )
+        }
+        {
           contact.email && (
             <S.Headline>{contact.email}</S.Headline>
           )

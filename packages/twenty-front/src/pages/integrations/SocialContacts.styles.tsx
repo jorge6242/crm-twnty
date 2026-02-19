@@ -13,6 +13,7 @@ export const SectionSubtitle = styled.div`
   align-items: center;
   justify-content: center;
   font-weight: 500;
+  justify-content: start;
 `;
 
 export const ContactList = styled.div`
@@ -150,13 +151,13 @@ export const StyledTabBar = styled.div`
 `;
 
 export const StyledTabButton = styled.button<{ $active?: boolean }>`
-  background: ${({ $active, theme }) =>
-    $active ? theme.background.secondary : 'transparent'};
+  background: ${({ $active, theme }) => $active ? theme.background.secondary : 'transparent'};
   color: ${({ theme }) => theme.font.color.primary};
-  border: ${({ $active }) => ($active ? '1px solid #ffffffff' : '1px solid #b2b1b1ff')} ;
+  border: ${({ $active }) => ($active ? '2px solid #ffffffff' : '1px solid #b2b1b1ff')} ;
   padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(3)};
   border-radius: ${({ theme }) => theme.border.radius.sm};
   cursor: pointer;
+  font-size: ${({ theme }) => theme.font.size.lg};
 `;
 
 export const TabContent = styled.div`
@@ -176,12 +177,14 @@ export const StyledCardWrapper = styled.div`
   padding: ${({ theme }) => theme.spacing(6)};
   box-shadow: ${({ theme }) => theme.boxShadow.strong};
   border-radius: ${({ theme }) => theme.border.radius.md};
+  gap: ${({ theme }) => theme.spacing(4)};
 `;
 
 export const StyledTitle = styled.h2`
   color: ${({ theme }) => theme.font.color.primary};
-  font-size: ${({ theme }) => theme.font.size.lg};
+  font-size: ${({ theme }) => theme.font.size.xl};
   margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
+  font-weight: ${({ theme }) => theme.font.weight.semiBold};
 `;
 
 export const StyledMessage = styled.div`
@@ -220,22 +223,35 @@ export const HeaderContactContainer = styled.div`
 
 export const BodyContactContainer = styled.div`
   align-items: center;
+  display: flex;
+  flex-direction: column;
   padding-left: ${({ theme }) => theme.spacing(9)};
   padding-right: ${({ theme }) => theme.spacing(9)};
-  gap: ${({ theme }) => theme.spacing(3)};
+  gap: ${({ theme }) => theme.spacing(7)};
 `;
 
 export const BodyContactDetails = styled.div`
   display: flex;
   justify-content: space-between;
   min-width: 0;
+  width: 100%;
+  border: 2px solid white;
+  padding: 10px;
+  border-radius: ${({ theme }) => theme.border.radius.md};
 `;
+
+export const BodyContactDetails2 = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+`;
+
 
 export const SocialVerifyContainer = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-flex-direction: column;
+  flex-direction: column;
   min-width: 0;
   gap: ${({ theme }) => theme.spacing(4)};
   border: 2px solid grey;
@@ -293,4 +309,17 @@ export const PresenceBadge = styled.div<{ $present?: boolean }>`
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 0.05em;
+`;
+
+export const StyledActionButtons = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing(2)};
+  align-items: center;
+`;
+
+export const BodyContactDetailsContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing(2)};
+  width: 100%;
 `;
