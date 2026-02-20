@@ -401,23 +401,17 @@ async disconnectAccount(provider: string, user: UserEntity) {
             { shouldBypassPermissionChecks: true },
           );
 
-          const emailsToCheck = peopleToCreate
-            .map((p) => p.emails?.primaryEmail)
-            .filter(Boolean);
+          const emailsToCheck = peopleToCreate.map((p) => p.emails?.primaryEmail).filter(Boolean);
 
           const existingPeople = emailsToCheck.length > 0
             ? await personRepository
                 .createQueryBuilder('person')
                 .where('person.emailsPrimaryEmail IN (:...emails)', { emails: emailsToCheck })
+                .withDeleted()
                 .getMany()
             : [];
 
-          const existingEmailsMap = new Map(
-            existingPeople.map((p: any) => [
-              p.emails?.primaryEmail?.toLowerCase(),
-              p,
-            ]),
-          );
+          const existingEmailsMap = new Map(existingPeople.map((p: any) => [p.emails?.primaryEmail?.toLowerCase(),p,]));
 
           // Separar en personas a crear y personas a actualizar
           const peopleToInsert: Partial<PersonWorkspaceEntity>[] = [];
@@ -435,6 +429,11 @@ async disconnectAccount(provider: string, user: UserEntity) {
                 provider.toLowerCase(),
               );
 
+                if (existingPerson.deletedAt !== null) {
+                  updates.deletedAt = null;
+                  this.logger.log(`Restoring soft-deleted person: ${existingPerson.id}`);
+                }
+
               if (isMicrosoftProvider) {
                 // Microsoft/Outlook: solo actualizar nombre si viene información
                 if (person.name?.firstName || person.name?.lastName) {
@@ -445,21 +444,11 @@ async disconnectAccount(provider: string, user: UserEntity) {
                 }
               } else if (isLinkedInProvider) {
                 // LinkedIn: actualizar campos específicos de LinkedIn
-                if (person.linkedinLink?.primaryLinkUrl) {
-                  updates.linkedinLink = person.linkedinLink;
-                }
-                if (person.jobTitle) {
-                  updates.jobTitle = person.jobTitle;
-                }
-                if (person.companyId) {
-                  updates.companyId = person.companyId;
-                }
-                if (person.city) {
-                  updates.city = person.city;
-                }
-                if (person.avatarUrl) {
-                  updates.avatarUrl = person.avatarUrl;
-                }
+                if (person.linkedinLink?.primaryLinkUrl) { updates.linkedinLink = person.linkedinLink; }
+                if (person.jobTitle) { updates.jobTitle = person.jobTitle; }
+                if (person.companyId) { updates.companyId = person.companyId; }
+                if (person.city) { updates.city = person.city; }
+                if (person.avatarUrl) { updates.avatarUrl = person.avatarUrl; }
                 // Si LinkedIn trae nombre, también actualizarlo
                 if (person.name?.firstName || person.name?.lastName) {
                   updates.name = {
