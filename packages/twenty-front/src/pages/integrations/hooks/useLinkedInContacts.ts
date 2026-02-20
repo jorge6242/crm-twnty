@@ -177,6 +177,7 @@ export const useLinkedInContacts = () => {
         setContacts([]);
         setNextCursor(null);
         setShowSyncButton(false);
+        fetchLeadUserAccounts();
       }
     } catch (error) {
       setLoadingStates((prev) => ({ ...prev, disconnect: false }));

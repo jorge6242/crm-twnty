@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, AxiosInstance } from 'axios';
 import https from 'https';
 import { MergeContactDto } from 'src/modules/integrations/social-accounts/dto/merge-contact.dto';
+import { normalizePhone } from 'src/utils/phone';
 import { v4 } from 'uuid';
 
 export interface UnipileAccountResponse {
@@ -403,17 +404,29 @@ mapMicrosoftContacts = (contacts: any[]) => {
 };
 
 mapWhatsAppContacts(contacts: any[]) {
-  return contacts.map(contact => ({
+  return contacts.map(contact => {
+
+    let firstName = null;
+    let lastName = null;
+    if(!contact.name.startsWith('+')) {
+      const nameParts = contact.name.split(' ');
+      firstName = nameParts[0] || '';
+      lastName = nameParts.slice(1).join(' ') || null;
+    }
+    const cleanPhone = normalizePhone(contact.phone || '');
+    const syntheticEmail = cleanPhone ? `${firstName}${lastName}_${cleanPhone}@whatsapp.local`.toLocaleLowerCase() : null;
+    return {
     id: contact.id,
-    firstName: contact.name,
-    lastName: null,
+    firstName: firstName,
+    lastName: lastName,
     publicProfileUrl: null,
     profilePictureUrl: null,
     headline: null,
-    email: contact.email,
+    email: syntheticEmail,
     phone: contact.phone,
     companyName: null,
-  }));
+  }
+  });
 }
 
   async getLinkedinConnections(accountId: string, limit = 50, cursor?: string) {
@@ -728,7 +741,7 @@ async getAccountContacts(
     | null
   > {
     try {
-      if(provider === 'email') {
+      if(provider === 'email' || provider === 'whatsapp') {
         return {
           email: contact.email || '',
           phone: '',
@@ -854,7 +867,7 @@ async getAccountContacts(
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
-        notify_url: `https://6833-77-71-156-184.ngrok-free.app/webhooks/unipile`,
+        notify_url: `https://b3cb-77-71-156-184.ngrok-free.app/webhooks/unipile`,
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente

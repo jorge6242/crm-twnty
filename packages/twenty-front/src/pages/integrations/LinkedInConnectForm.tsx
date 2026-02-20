@@ -59,6 +59,18 @@ const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+    const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+  };
+
+    const handleKeyUp = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    e.stopPropagation();
+  };
+
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onConnectSocialAccount({ username, password });
@@ -72,10 +84,12 @@ const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({
         <Input
           id="linkedin-username"
           type="text"
-          autoComplete="username"
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           placeholder="Email or username"
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onKeyPress={handleKeyPress}
           required
         />
       </InputContainer>
@@ -84,10 +98,12 @@ const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({
         <Input
           id="linkedin-password"
           type="password"
-          autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
+          onKeyPress={handleKeyPress}
           required
         />
       </InputContainer>
@@ -97,6 +113,7 @@ const LinkedInConnectForm: FC<LinkedInConnectFormProps> = ({
       <Button
         isLoading={socialLoading}
         title="Connect"
+
         onClick={onSubmit}
       />
 
