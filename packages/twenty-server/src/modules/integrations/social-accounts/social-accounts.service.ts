@@ -390,24 +390,118 @@ async disconnectAccount(provider: string, user: UserEntity) {
                       } as any)
                     : null,
                 avatarUrl: p.profilePictureUrl ?? null,
+                sourceData: p, // Guardamos los datos originales para el update
               } as Partial<PersonWorkspaceEntity>;
             });
 
-          const created = await this.createPersonService.createPeople(
-            peopleToCreate,
+          // Buscar personas existentes por email
+          const personRepository = await this.globalWorkspaceOrmManager.getRepository(
             workspaceId,
-            authContext,
+            PersonWorkspaceEntity,
+            { shouldBypassPermissionChecks: true },
           );
 
+          const emailsToCheck = peopleToCreate.map((p) => p.emails?.primaryEmail).filter(Boolean);
+
+          const existingPeople = emailsToCheck.length > 0
+            ? await personRepository
+                .createQueryBuilder('person')
+                .where('person.emailsPrimaryEmail IN (:...emails)', { emails: emailsToCheck })
+                .withDeleted()
+                .getMany()
+            : [];
+
+          const existingEmailsMap = new Map(existingPeople.map((p: any) => [p.emails?.primaryEmail?.toLowerCase(),p,]));
+
+          // Separar en personas a crear y personas a actualizar
+          const peopleToInsert: Partial<PersonWorkspaceEntity>[] = [];
+          const peopleToUpdate: { id: string; updates: any }[] = [];
+
+          for (const person of peopleToCreate) {
+            const email = person.emails?.primaryEmail?.toLowerCase();
+            const existingPerson = email ? existingEmailsMap.get(email) : null;
+
+            if (existingPerson) {
+              // Ya existe, preparar update selectivo según provider
+              const updates: any = {};
+              const isLinkedInProvider = provider.toLowerCase() === 'linkedin';
+              const isMicrosoftProvider = ['email', 'microsoft', 'outlook'].includes(
+                provider.toLowerCase(),
+              );
+
+                if (existingPerson.deletedAt !== null) {
+                  updates.deletedAt = null;
+                  this.logger.log(`Restoring soft-deleted person: ${existingPerson.id}`);
+                }
+
+              if (isMicrosoftProvider) {
+                // Microsoft/Outlook: solo actualizar nombre si viene información
+                if (person.name?.firstName || person.name?.lastName) {
+                  updates.name = {
+                    firstName: person.name.firstName || existingPerson.name?.firstName || null,
+                    lastName: person.name.lastName || existingPerson.name?.lastName || null,
+                  };
+                }
+              } else if (isLinkedInProvider) {
+                // LinkedIn: actualizar campos específicos de LinkedIn
+                if (person.linkedinLink?.primaryLinkUrl) { updates.linkedinLink = person.linkedinLink; }
+                if (person.jobTitle) { updates.jobTitle = person.jobTitle; }
+                if (person.companyId) { updates.companyId = person.companyId; }
+                if (person.city) { updates.city = person.city; }
+                if (person.avatarUrl) { updates.avatarUrl = person.avatarUrl; }
+                // Si LinkedIn trae nombre, también actualizarlo
+                if (person.name?.firstName || person.name?.lastName) {
+                  updates.name = {
+                    firstName: person.name.firstName || existingPerson.name?.firstName || null,
+                    lastName: person.name.lastName || existingPerson.name?.lastName || null,
+                  };
+                }
+              }
+
+              if (Object.keys(updates).length > 0) {
+                peopleToUpdate.push({
+                  id: existingPerson.id,
+                  updates,
+                });
+              }
+            } else {
+              // No existe, agregar a la lista de creación
+              const { sourceData, ...personWithoutSourceData } = person as any;
+              peopleToInsert.push(personWithoutSourceData);
+            }
+          }
+
+          // Crear personas nuevas
+          let createdCount = 0;
+          if (peopleToInsert.length > 0) {
+            const created = await this.createPersonService.createPeople(
+              peopleToInsert,
+              workspaceId,
+              authContext,
+            );
+            createdCount = created.length;
+          }
+
+          // Actualizar personas existentes
+          let updatedCount = 0;
+          for (const { id, updates } of peopleToUpdate) {
+            try {
+              await personRepository.update(id, updates);
+              updatedCount++;
+            } catch (error) {
+              console.error(`Error updating person ${id}:`, error);
+            }
+          }
+
           console.log(
-            'Merge completed successfully:',
-            created.length,
-            'people created.',
+            `Merge completed successfully: ${createdCount} people created, ${updatedCount} people updated.`,
           );
 
           return {
             success: true,
-            count: created.length,
+            created: createdCount,
+            updated: updatedCount,
+            total: createdCount + updatedCount,
           };
         } catch (error) {
           console.error('ERROR DETECTADO EN mergeContactsToPeople:', error);
@@ -712,13 +806,10 @@ async disconnectAccount(provider: string, user: UserEntity) {
       await this.globalWorkspaceOrmManager.executeInWorkspaceContext(
         authContext,
         async () => {
-          const profileUrls = unipileRes.contacts
-            .map((c: any) => c.publicProfileUrl)
-            .filter(Boolean);
+          const profileUrls = unipileRes.contacts.map((c: any) => c.publicProfileUrl).filter(Boolean);
 
           if (profileUrls.length > 0) {
-            const personRepository =
-              await this.globalWorkspaceOrmManager.getRepository(
+            const personRepository = await this.globalWorkspaceOrmManager.getRepository(
                 workspaceId,
                 PersonWorkspaceEntity,
                 { shouldBypassPermissionChecks: true },
@@ -732,9 +823,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
               } as any,
             });
 
-            const existingUrlsMap = new Map(
-              existingPeople.map((p) => [p.linkedinLink?.primaryLinkUrl, p.id]),
-            );
+            const existingUrlsMap = new Map(existingPeople.map((p) => [p.linkedinLink?.primaryLinkUrl, p.id]));
 
             unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
               ...contact,
