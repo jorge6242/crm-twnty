@@ -49,7 +49,8 @@ export class SocialAccountsService {
     authUser: any,
     workspaceId?: string,
   ): Promise<{ message: string; account_id?: string; lead?: LeadUserEntity }> {
-    const response = await this.unipileService.connectLinkedAccount(
+    try {
+      const response = await this.unipileService.connectLinkedAccount(
       username,
       password,
       'LINKEDIN',
@@ -96,6 +97,10 @@ export class SocialAccountsService {
       message: (response as any).message ?? 'Account linked successfully',
       account_id: (saved as any)?.providerAccountId ?? null,
     };
+    } catch (error) {
+          this.logger.error('Error linking account:', error);
+          throw error; // ✅ Lanzar el error para que el controller lo maneje
+    }
   }
 
   async getLinkedinAccount(

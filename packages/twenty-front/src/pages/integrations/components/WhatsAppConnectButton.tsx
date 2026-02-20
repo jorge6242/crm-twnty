@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
 import { Button } from 'twenty-ui/input';
 import { useWhatsAppAuth } from '~/pages/integrations/hooks/useWhatsappAuth';
 
@@ -27,18 +28,53 @@ const StyledMessage = styled.p`
   color: white;
 `;
 
+const StyledQrCodeContainer = styled.div`
+  margin-top: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+`;
+
 export const WhatsAppConnectButton = ({ fetchContacts, fetchLeadUserAccounts }: { fetchContacts: () => void, fetchLeadUserAccounts: () => void }) => {
+  const [ isTemporalTimer, setIsTemporalTimer ] = useState(false);
+  const [countdown, setCountdown] = useState(30);
   const { connectWhatsApp, qrCodeUrl, isLoading, isConnected, isWaitingForAuth } = useWhatsAppAuth({ fetchLeadUserAccounts });
+
+  useEffect(() => {
+    if (!isTemporalTimer) {
+      setCountdown(30);
+      return;
+    }
+    const intervalId = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          setIsTemporalTimer(false);
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(intervalId);
+  }, [isTemporalTimer]);
+
+  useEffect(() => {
+    if (isConnected) {
+      setIsTemporalTimer(true);
+      setCountdown(30);
+    }
+  }, [isConnected]);
+
   if (isConnected) {
     return (
       <StyledContainer>
         <StyledMessage>WhatsApp is connected, syncing contacts...</StyledMessage>
         <Button
           variant="secondary"
-          title="Refresh to get Contacts"
+          title={isTemporalTimer ? `Syncing... ${countdown}s` : "Refresh to get Contacts"}
           onClick={() => fetchContacts()}
           isLoading={isLoading}
-          disabled={isLoading}
+          disabled={isTemporalTimer ||isLoading}
         />
       </StyledContainer>
     );
@@ -59,11 +95,11 @@ export const WhatsAppConnectButton = ({ fetchContacts, fetchLeadUserAccounts }: 
       )}
 
       {!isWaitingForAuth && qrCodeUrl && (
-        <>
-          <p>Scan the QR code with WhatsApp on your phone</p>
+        <StyledQrCodeContainer>
+          <StyledMessage>Scan the QR code with WhatsApp on your phone</StyledMessage>
           <StyledQrCode src={qrCodeUrl} alt="WhatsApp QR Code" />
-          <p>Or open WhatsApp &​gt; Menu &​gt; Linked Devices</p>
-        </>
+          <StyledMessage>Or open WhatsApp &gt; Menu &gt; Linked Devices</StyledMessage>
+        </StyledQrCodeContainer>
       )}
     </StyledContainer>
   );

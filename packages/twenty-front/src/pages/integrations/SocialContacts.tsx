@@ -166,14 +166,9 @@ export const SocialContacts = () => {
 
           {activeTab === 'email' && (
             <>
-          {!leadAccount && !isMicrosoftConnected ? (
+          {!contacts.length && !leadAccount && !isMicrosoftConnected ? (
             <div>
-              {!contacts.length && (
-                <>
-                <S.StyledMessage>Connect your Microsoft Outlook account to access emails</S.StyledMessage>
-
-                </>
-              )}
+              <S.StyledMessage>Connect your Microsoft Outlook account to access emails</S.StyledMessage>
               <Button
                 isLoading={isMicrosoftLoading}
                 title="Connect Microsoft Outlook"
