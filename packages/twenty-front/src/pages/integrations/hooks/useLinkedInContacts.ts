@@ -77,6 +77,7 @@ export const useLinkedInContacts = () => {
   const fetchContacts = async (cursor?: string) => {
     console.log('activeTab ', activeTab);
     console.log('cursor ', cursor);
+    fetchLeadUserAccounts();
     try {
       if (cursor) {
         setLoadingStates((prev) => ({ ...prev, loadMore: true }));

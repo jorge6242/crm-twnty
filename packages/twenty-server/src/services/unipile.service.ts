@@ -24,10 +24,10 @@ export class UnipileService {
         'X-API-KEY': config.get<string>('UNIPILE_API_KEY', ''),
         Accept: 'application/json',
       },
-      timeout: 20000,
+      timeout: 50000,
       httpsAgent: new https.Agent({
         keepAlive: true,
-        timeout: 20000,
+        timeout: 50000,
       }),
     });
   }
@@ -867,7 +867,7 @@ async getAccountContacts(
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
-        notify_url: `https://b3cb-77-71-156-184.ngrok-free.app/webhooks/unipile`,
+        notify_url: `https://6969-77-71-156-184.ngrok-free.app/webhooks/unipile`,
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente
