@@ -19,7 +19,7 @@ export class UnipileService {
 
   constructor(private readonly config: ConfigService) {
     this.http = axios.create({
-      baseURL: config.get<string>('UNIPILE_BASE_URL', ''),
+      baseURL: `${config.get<string>('UNIPILE_BASE_URL', '')}/api/v1`,
       headers: {
         'X-API-KEY': config.get<string>('UNIPILE_API_KEY', ''),
         Accept: 'application/json',
@@ -862,12 +862,12 @@ async getAccountContacts(
       const requestBody = {
         type: reconnectAccountId ? 'reconnect' : 'create',
         providers: ['OUTLOOK'], // Microsoft Outlook usa OUTLOOK
-        api_url: 'https://api20.unipile.com:15039', // Tu servidor Unipile
+        api_url: this.config.get<string>('UNIPILE_BASE_URL', ''), // Tu servidor Unipile
         client_id: 'f5b27453-3d1a-4c0d-b60d-0c51842135d0', // TU Application ID correcto
         expiresOn: new Date(Date.now() + 60 * 60 * 1000).toISOString(), // 1 hora
         success_redirect_url: redirectUrl,
         failure_redirect_url: redirectUrl,
-        notify_url: `https://6969-77-71-156-184.ngrok-free.app/webhooks/unipile`,
+        notify_url: `${this.config.get<string>('TEMPORAL_BACKEND_BASE_URL', '')}/webhooks/unipile`,
         name: userAndWorkspaceInfo,
         user_id: userAndWorkspaceInfo,
         features: ['contacts', 'mails'],  // Añadido 'mails' explícitamente
