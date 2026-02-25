@@ -1,13 +1,13 @@
 import styled from '@emotion/styled';
 
 export const SectionTitle = styled.h3`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   margin: 0 0 ${({ theme }) => theme.spacing(2)} 0;
   font-size: ${({ theme }) => theme.font.size.md};
 `;
 
 export const SectionSubtitle = styled.div`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   font-size: ${({ theme }) => theme.font.size.md};
   display: flex;
   align-items: center;
@@ -52,8 +52,8 @@ export const ContactItem = styled.div`
   gap: ${({ theme }) => theme.spacing(3)};
   padding: ${({ theme }) => theme.spacing(3)};
   background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: ${({ theme }) => theme.border.radius.sm};
+  border: 1px solid ${({ theme }) => theme.font.color.secondary};
+  border-radius: ${({ theme }) => theme.border.radius.md};
   transition: background 120ms ease, transform 120ms ease;
   &:hover {
     background: rgba(255, 255, 255, 0.05);
@@ -77,8 +77,25 @@ export const ContactInfo = styled.div`
   gap: ${({ theme }) => theme.spacing(1)};
 `;
 
+export const ContactNameAndBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing(2)};
+`;
+
+export const ContactBadge = styled.div`
+  appearance: none;
+  border: none;
+  padding: ${({ theme }) => theme.spacing(1)} ${({ theme }) => theme.spacing(2)};
+  border-radius: 999px;
+  background: linear-gradient(90deg,#06b6d4,#3b82f6);
+  color: #061826;
+  font-weight: 600;
+  font-size: ${({ theme }) => theme.font.size.sm};
+`;
+
 export const Name = styled.div`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.xl};
   white-space: nowrap;
@@ -87,7 +104,7 @@ export const Name = styled.div`
 `;
 
 export const Headline = styled.div`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.md};
   white-space: nowrap;
@@ -97,7 +114,7 @@ export const Headline = styled.div`
 `;
 
 export const LastJob = styled.div`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.sm};
   white-space: nowrap;
@@ -106,7 +123,7 @@ export const LastJob = styled.div`
 `;
 
 export const ShowDetailsButton = styled.button<{ $active?: boolean }>`
-  color: #fff;
+  color: ${({ theme }) => theme.font.color.primary};
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.md};
   white-space: nowrap;
@@ -123,7 +140,7 @@ export const ShowDetailsButton = styled.button<{ $active?: boolean }>`
 `;
 
 export const ProfileLink = styled.a`
-  color: rgba(255,255,255,0.75);
+  color: ${({ theme }) => theme.font.color.primary};
   font-size: ${({ theme }) => theme.font.size.sm};
   text-decoration: none;
   margin-top: ${({ theme }) => theme.spacing(0.5)};
@@ -142,6 +159,7 @@ export const StyledContainer = styled.div`
   min-height: 100dvh;
   width: 100%;
   padding: ${({ theme }) => theme.spacing(6)};
+  margin-bottom: 20px;
 `;
 
 export const StyledTabBar = styled.div`
@@ -151,9 +169,9 @@ export const StyledTabBar = styled.div`
 `;
 
 export const StyledTabButton = styled.button<{ $active?: boolean }>`
-  background: ${({ $active, theme }) => $active ? theme.background.secondary : 'transparent'};
   color: ${({ theme }) => theme.font.color.primary};
-  border: ${({ $active }) => ($active ? '2px solid #ffffffff' : '1px solid #b2b1b1ff')} ;
+  background: transparent;
+  border: ${({ $active, theme }) => ($active ? `2px solid ${theme.font.color.primary}` : `1px solid ${theme.font.color.secondary}`)} ;
   padding: ${({ theme }) => theme.spacing(2)} ${({ theme }) => theme.spacing(3)};
   border-radius: ${({ theme }) => theme.border.radius.sm};
   cursor: pointer;
@@ -183,12 +201,11 @@ export const StyledCardWrapper = styled.div`
 export const StyledTitle = styled.h2`
   color: ${({ theme }) => theme.font.color.primary};
   font-size: ${({ theme }) => theme.font.size.xl};
-  margin: 0 0 ${({ theme }) => theme.spacing(4)} 0;
   font-weight: ${({ theme }) => theme.font.weight.semiBold};
 `;
 
 export const StyledMessage = styled.div`
-  color: white;
+  color: ${({ theme }) => theme.font.color.primary};
   font-size: ${({ theme }) => theme.font.size.md};
   margin-top: ${({ theme }) => theme.spacing(2)};
 `;
@@ -208,7 +225,7 @@ export const SwitchButton = styled.button<{ $active?: boolean }>`
   border-radius: 999px;
   background: ${({ $active }) =>
     $active ? 'linear-gradient(90deg,#06b6d4,#3b82f6)' : 'rgba(255,255,255,0.06)'};
-  color: ${({ $active }) => ($active ? '#061826' : 'rgba(255,255,255,0.9)')};
+  color: ${({ $active, theme }) => ($active ? '#061826' : theme.font.color.primary)};
   font-weight: 600;
   font-size: ${({ theme }) => theme.font.size.sm};
   transition: background .12s ease, transform .08s ease;
@@ -322,4 +339,9 @@ export const BodyContactDetailsContainer = styled.div`
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing(2)};
   width: 100%;
+`;
+
+export const LoadMoreButtonContainer = styled.div`
+  display: flex;
+  justify-content: center;
 `;

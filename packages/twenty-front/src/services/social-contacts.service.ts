@@ -151,18 +151,23 @@ export async function storeContactsToPeople<TCache = any>(client: ApolloClient<T
     return data?.mergeContacts ?? null;
 }
 
-export async function getContactDetail<TCache = any>(client: ApolloClient<TCache>, payload: { contactId: string, accountId: string}) {
-    const { contactId, accountId } = payload;
-    // Limpiar el contactId eliminando slashes al final
+const extractLinkedInSlug = (profileUrl: string): string => {
+  const match = profileUrl.match(/linkedin\.com\/in\/([^/?#]+)/);
+  return match ? match[1] : profileUrl;
+};
+
+export async function getContactDetail<TCache = any>(client: ApolloClient<TCache>, payload: { contactId: string, accountId: string, profileUrl: string }) {
+    const { contactId, accountId, profileUrl } = payload;
     const cleanContactId = contactId.replace(/\/+$/, '');
     const cleanAccountId = accountId.replace(/\/+$/, '');
+    const cleanProfileUrl = extractLinkedInSlug(profileUrl);
 
     const QGLQuery = gql`
-      query GetContactDetail($contactId: String!, $accountId: String!) {
-        getContactDetail(contactId: $contactId, accountId: $accountId)
+      query GetContactDetail($contactId: String!, $accountId: String!, $profileUrl: String!) {
+        getContactDetail(contactId: $contactId, accountId: $accountId, profileUrl: $profileUrl)
           @rest(
             type: "GetContactDetailResponse"
-            path: "/metadata/social-accounts/get-contact-detail/{args.contactId}/{args.accountId}"
+            path: "/metadata/social-accounts/get-contact-detail/{args.contactId}/{args.accountId}/{args.profileUrl}"
             method: "GET"
           ) {
          email
@@ -171,6 +176,8 @@ export async function getContactDetail<TCache = any>(client: ApolloClient<TCache
          profilePictureUrl
          publicProfileUrl
          id
+         emailStatus
+         enrichmentId
          lastCompany {
           name
           position
@@ -184,10 +191,33 @@ export async function getContactDetail<TCache = any>(client: ApolloClient<TCache
     `;
       const { data } = await client.query({
         query: QGLQuery,
-        variables: { contactId: cleanContactId, accountId: cleanAccountId },
+        variables: { contactId: cleanContactId, accountId: cleanAccountId, profileUrl: cleanProfileUrl },
         context: { fetchOptions: { cache: 'no-store' } },
       })
     return data?.getContactDetail ?? null;
+}
+
+export async function getEnrichmentEmail<TCache = any>(client: ApolloClient<TCache>, enrichmentId: string) {
+  const QUERY = gql`
+    query GetEnrichmentEmail($enrichmentId: String!) {
+      getEnrichmentEmail(enrichmentId: $enrichmentId)
+        @rest(
+          type: "GetEnrichmentEmailResponse"
+          path: "/metadata/social-accounts/enrichment-email/{args.enrichmentId}"
+          method: "GET"
+        ) {
+        email
+        status
+      }
+    }
+  `;
+  const { data } = await client.query({
+    query: QUERY,
+    variables: { enrichmentId },
+    fetchPolicy: 'network-only',
+    context: { fetchOptions: { cache: 'no-store' } },
+  });
+  return data?.getEnrichmentEmail ?? null;
 }
 
 export async function initiateMicrosoftAuth<TCache = any>(

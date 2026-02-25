@@ -1,3 +1,4 @@
+import { H2Title, H3Title } from 'twenty-ui/display';
 import { Loader } from 'twenty-ui/feedback';
 import { Button } from 'twenty-ui/input';
 import { SocialContactListItem } from '~/pages/integrations/components/SocialContactListItem';
@@ -12,7 +13,7 @@ interface TabContentProps {
   disconnectAccount: () => void;
   mergeSelectedContacts: () => void;
   toggleContactSelection: (id: string) => void;
-  fetchContactDetails?: ((id: string, accountId: string) => void) | null;
+  fetchContactDetails?: ((id: string, profileUrl: string) => void) | null;
   accountDetailList: any[];
   businessMap: Record<string, boolean>;
   selectedAccountDetail: string | null;
@@ -39,8 +40,8 @@ export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoadi
                 <S.BodyContactContainer>
                   <S.BodyContactDetails>
                     <S.BodyContactDetails2>
-                      <S.SectionTitle>Account Details</S.SectionTitle>
-                      <S.SectionSubtitle> Username: {leadAccount?.username ?? ''}</S.SectionSubtitle>
+                      <H3Title title='Account Details' ></H3Title>
+                      <H2Title title={`Username: ${leadAccount?.username ?? ''}`} ></H2Title>
                     </S.BodyContactDetails2>
                     <S.StyledActionButtons>
                       <Button
@@ -77,19 +78,19 @@ export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoadi
                           isAlreadyInCrm={!!account.isAlreadyInCrm}
                           isDetailsLoading={isLoading.details && selectedAccountDetail === account.id}
                           onToggleSelection={() => toggleContactSelection(account.id)}
-                          onShowDetails={fetchContactDetails ? () => fetchContactDetails(account.id, account.id) : null}
+                          onShowDetails={fetchContactDetails ? () => fetchContactDetails(account.id, account.publicProfileUrl || '') : null}
                           contactLabel={contactLabel}
                         />
                       ))}
                     </S.ContactList>
                     {nextCursor && (
-                      <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'center' }}>
+                      <S.LoadMoreButtonContainer>
                         <Button
                           isLoading={isLoading.loadMore}
                           title="Load More Contacts"
                           onClick={loadMoreContacts}
                         />
-                      </div>
+                      </S.LoadMoreButtonContainer>
                     )}
                   </S.BodyContactDetailsContainer>
                 </S.BodyContactContainer>
