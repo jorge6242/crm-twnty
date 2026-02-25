@@ -120,6 +120,18 @@ export const LastJob = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  line-height: 1.3;
+  border-top: 1px solid ${({ theme }) => theme.font.color.primary};
+  margin-top: ${({ theme }) => theme.spacing(2)};
+  padding-top: ${({ theme }) => theme.spacing(3)};
+  > * {
+    margin: 0;
+    padding: 0;
+  }
+
+  > * + * {
+    margin-top: 2px;
+  }
 `;
 
 export const ShowDetailsButton = styled.button<{ $active?: boolean }>`

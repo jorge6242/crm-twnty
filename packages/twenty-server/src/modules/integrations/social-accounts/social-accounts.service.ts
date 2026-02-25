@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { enUS } from 'date-fns/locale';
 import { v4 as uuidv4 } from 'uuid';
 
 import { In, Repository } from 'typeorm';
@@ -265,7 +267,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
     if (!leadSource) {
       throw new Error(`Unsupported provider: ${provider}`);
     }
-
+    const companiesToInsert: any[] = [];
     return this.globalWorkspaceOrmManager.executeInWorkspaceContext(
       authContext,
       async () => {
@@ -332,7 +334,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
           const existingCompaniesByName = new Map(
             existingCompanies.map((c) => [c.name, c]),
           );
-          const companiesToInsert: any[] = [];
+
 
           for (const [name, companyData] of uniqueCompaniesMap.entries()) {
             const existingCompany = existingCompaniesByName.get(name);
@@ -360,6 +362,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
           if (companiesToInsert.length > 0) {
             await companyRepository.insert(companiesToInsert);
           }
+                 console.log('companiesToInsert ', companiesToInsert);
           }
 
           const peopleToCreate: Partial<PersonWorkspaceEntity>[] = newPeoples
@@ -478,7 +481,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
               peopleToInsert.push(personWithoutSourceData);
             }
           }
-
+          let createdPersons: any[] = [];
           // Crear personas nuevas
           let createdCount = 0;
           if (peopleToInsert.length > 0) {
@@ -488,10 +491,12 @@ async disconnectAccount(provider: string, user: UserEntity) {
               authContext,
             );
             createdCount = created.length;
+            createdPersons = created;
           }
 
           // Actualizar personas existentes
           let updatedCount = 0;
+
           for (const { id, updates } of peopleToUpdate) {
             try {
               await personRepository.update(id, updates);
@@ -504,12 +509,37 @@ async disconnectAccount(provider: string, user: UserEntity) {
           console.log(
             `Merge completed successfully: ${createdCount} people created, ${updatedCount} people updated.`,
           );
+          const companiesById = new Map(
+            Array.from(uniqueCompaniesMap.values()).map((c) => [c.id, c])
+          );
+
+          const peopleCreadtedList = peopleToInsert
+            .filter((e) => createdPersons.find((cp) => cp.id === e.id))
+            .map((cp) => {
+              const currentCompany = cp.companyId
+                ? companiesById.get(cp.companyId) ?? null
+                : null;
+              return {
+                ...cp,
+                email: cp.emails?.primaryEmail || null,
+                publicProfileUrl: cp.linkedinLink?.primaryLinkUrl || null,
+                lastCompany: currentCompany
+                  ? {
+                      name: currentCompany.name || null,
+                      position: cp.jobTitle || null,
+                      location: cp.city || null,
+                      updatedAt: formatDistanceToNow(parseISO(new Date().toISOString()), { locale: enUS }),
+                    }
+                  : null
+              };
+            });
 
           return {
             success: true,
             created: createdCount,
             updated: updatedCount,
             total: createdCount + updatedCount,
+            peopleCreadtedList: peopleCreadtedList,
           };
         } catch (error) {
           console.error('ERROR DETECTADO EN mergeContactsToPeople:', error);
@@ -876,15 +906,29 @@ async disconnectAccount(provider: string, user: UserEntity) {
                   primaryLinkUrl: In(profileUrls),
                 },
               } as any,
+              relations: ['company'],
             });
 
             const existingUrlsMap = new Map(existingPeople.map((p) => [p.linkedinLink?.primaryLinkUrl, p.id]));
 
-            unipileRes.contacts = unipileRes.contacts.map((contact: any) => ({
+            unipileRes.contacts = unipileRes.contacts.map((contact: any) => {
+              let people = null;
+              if(existingUrlsMap.has(contact.publicProfileUrl)){
+                people = existingPeople.find((p) => p.linkedinLink?.primaryLinkUrl === contact.publicProfileUrl);
+              }
+              return {
               ...contact,
               isAlreadyInCrm: existingUrlsMap.has(contact.publicProfileUrl),
               personId: existingUrlsMap.get(contact.publicProfileUrl) || null,
-            }));
+              lastCompany: people ? {
+                name: people?.company?.name || null,
+                position: people?.jobTitle || null,
+                location: people?.city|| null,
+                updatedAt: people?.updatedAt ? formatDistanceToNow(typeof people.updatedAt === 'string' ? parseISO(people.updatedAt) : people.updatedAt, { addSuffix: true, locale: enUS }) : null,
+              } : null,
+              email: people?.emails?.primaryEmail || null,
+            }
+            });
           }
         },
       );

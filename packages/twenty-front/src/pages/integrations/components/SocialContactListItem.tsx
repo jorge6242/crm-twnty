@@ -58,7 +58,7 @@ export const SocialContactListItem = ({
   const theme = useTheme();
   const displayName = `${contact.firstName ?? ''} ${contact.lastName ?? ''}`.trim() || 'Unknown';
   const hasProfilePicture = !!contact.profilePictureUrl;
-
+  const currentContactWithCompany = contactDetail?.lastCompany || contact?.lastCompany || null;
   return (
     <S.ContactItem
       role="listitem"
@@ -99,14 +99,15 @@ export const SocialContactListItem = ({
             {contact.publicProfileUrl}
           </S.ProfileLink>
         )}
-        {contactDetail && (
+        {currentContactWithCompany && (
           <S.LastJob>
-            <p>Company: {contactDetail?.lastCompany?.name}</p>
-            <p>Position: {contactDetail?.lastCompany?.position}</p>
-            <p>Email: {contactDetail?.email}</p>
+            <p>Company: {currentContactWithCompany?.name}</p>
+            <p>Position: {currentContactWithCompany?.position}</p>
+            <p>Email: {contact.email || contactDetail?.email}</p>
+            { currentContactWithCompany?.updatedAt && <p>Last Updated: {currentContactWithCompany.updatedAt}</p>}
           </S.LastJob>
         )}
-        { onShowDetails && !contactDetail && (
+        { onShowDetails && !currentContactWithCompany && (
           <Button
             isLoading={isDetailsLoading}
             title="Show Details"
