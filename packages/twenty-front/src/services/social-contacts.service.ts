@@ -22,6 +22,13 @@ export async function getLinkedinAccountDetails<TCache = any>(client: ApolloClie
           headline
           isAlreadyInCrm
           personId
+          lastCompany {
+            name
+            position
+            location
+            email
+            updatedAt
+          }
         }
         nextCursor
       }
@@ -138,8 +145,7 @@ export async function storeContactsToPeople<TCache = any>(client: ApolloClient<T
             method: "POST"
             bodyKey: "input"
           ) {
-          message
-          mergedCount
+          peopleCreadtedList
         }
       }
     `;

@@ -12,6 +12,13 @@ export interface SocialContactList {
   headline?: string;
   isAlreadyInCrm?: boolean;
   personId?: string | null;
+  lastCompany?: {
+    name: string;
+    position: string;
+    location: string;
+    email?: string;
+    updatedAt?: string;
+  } | null;
 }
 
 interface LoadingStates {
@@ -144,16 +151,32 @@ export const useLinkedInContacts = () => {
     try {
       setLoadingStates((prev) => ({ ...prev, merge: true }));
       const res = await storeContactsToPeople({ selectedContacts, provider: activeTab });
-
+      console.log('mergeSelectedContacts res ', res)
       if (res) {
         // Update local state: mark synchronized contacts as already in CRM
-        const selectedIds = new Set(selectedContacts.map((c) => c.id));
-        setContacts((prevAccounts) =>
-          prevAccounts.map((acc) =>
-            selectedIds.has(acc.id) ? { ...acc, isAlreadyInCrm: true } : acc
-          )
-        );
+          const createdPeople: any[] = res.peopleCreadtedList || [];
 
+          // Map por id para lookup eficiente
+          const createdPeopleMap = new Map(createdPeople.map((p) => [p.publicProfileUrl, p]));
+
+          const selectedIds = new Set(selectedContacts.map((c) => c.id));
+
+          setContacts((prevAccounts) =>
+            prevAccounts.map((acc) => {
+              if (!selectedIds.has(acc.id)) return acc;
+
+              const created = createdPeopleMap.get(acc.publicProfileUrl);
+              console.log('mergeSelectedContacts created', created);
+              return {
+                ...acc,
+                isAlreadyInCrm: true,
+                ...(created && {
+                  email: created.email ?? acc.email,
+                  lastCompany: created.lastCompany ?? acc.lastCompany,
+                }),
+              };
+            })
+          );
         // Clear businessMap for synchronized contacts
         setBusinessMap((prevMap) => {
           const newMap = { ...prevMap };
