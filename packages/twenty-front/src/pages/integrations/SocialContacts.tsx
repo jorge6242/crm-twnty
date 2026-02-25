@@ -1,3 +1,4 @@
+import { H3Title } from 'twenty-ui/display';
 import { Button } from 'twenty-ui/input';
 import { SocialContactsTabContent } from '~/pages/integrations/components/social-contact-tab-content';
 import { WhatsAppConnectButton } from '~/pages/integrations/components/WhatsAppConnectButton';
@@ -39,7 +40,7 @@ export const SocialContacts = () => {
   return (
     <S.StyledContainer>
       <S.StyledCardWrapper>
-        <S.StyledTitle>Integration of social media contacts</S.StyledTitle>
+        <H3Title title='Integration of social media contacts' ></H3Title>
 
         <S.StyledTabBar
           role="tablist"
@@ -51,7 +52,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'linkedin'}
             onClick={() => setActiveTab('linkedin')}
           >
-            LinkedIn
+            <H3Title title='LinkedIn' ></H3Title>
           </S.StyledTabButton>
 
           <S.StyledTabButton
@@ -60,7 +61,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'whatsapp'}
             onClick={() => setActiveTab('whatsapp')}
           >
-            WhatsApp
+            <H3Title title='WhatsApp' ></H3Title>
           </S.StyledTabButton>
 
           <S.StyledTabButton
@@ -69,7 +70,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'email'}
             onClick={() => setActiveTab('email')}
           >
-            Microsoft Outlook
+            <H3Title title='Microsoft Outlook' ></H3Title>
           </S.StyledTabButton>
         </S.StyledTabBar>
 

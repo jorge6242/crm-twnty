@@ -55,6 +55,13 @@ export class SocialAccountsController {
   }
 
 
+  @Get('enrichment-email/:enrichmentId')
+  async getEnrichmentEmail(
+    @Param('enrichmentId') enrichmentId: string,
+  ) {
+    return this.service.getEnrichmentEmail(enrichmentId);
+  }
+
 @Get(':provider')
 async getProviderContacts(  // ← Cambiar nombre
   @Param('provider') provider: string,
@@ -86,18 +93,16 @@ async getProviderContacts(  // ← Cambiar nombre
     );
   }
 
-    @Get('get-contact-detail/:contactId/:accountId')
+    @Get('get-contact-detail/:contactId/:accountId/:profileUrl')
   async getContactDetail(
     @Req() request: AuthenticatedRequest,
     @Param('contactId') contactId: string,
     @Param('accountId') accountId: string,
+    @Param('profileUrl') profileUrl: string,
   ) {
-    console.log('getContactDetail with input:', contactId, accountId);
+    console.log('getContactDetail with input:', contactId, accountId, profileUrl);
 
-    return this.service.getContactDetail(
-      contactId,
-      request.user,
-    );
+    return this.service.getContactDetail( {contactId, user: request.user, profileSlug: profileUrl} );
   }
 
   @Post('connect/microsoft')

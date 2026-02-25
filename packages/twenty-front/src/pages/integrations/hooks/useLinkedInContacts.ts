@@ -32,6 +32,7 @@ export const useLinkedInContacts = () => {
     disconnectSocialAccount,
     storeContactsToPeople,
     getContactDetail,
+    getEnrichmentEmail,
   } = useSocialContactService();
 
   // State
@@ -224,17 +225,61 @@ export const useLinkedInContacts = () => {
     setBusinessMap((prev) => ({ ...prev, [contactId]: !prev[contactId] }));
   };
 
-  const fetchContactDetails = async (contactId: string, accountId: string) => {
+  const pollForEnrichedEmail = async (contactId: string, enrichmentId: string) => {
+    const MAX_ATTEMPTS = 10;
+    const DELAY_MS = 10000;
+    console.log('Polling for enriched email with enrichmentId:', enrichmentId);
+    for (let i = 0; i < MAX_ATTEMPTS; i++) {
+      await new Promise((resolve) => setTimeout(resolve, DELAY_MS));
+
+      try {
+        const result = await getEnrichmentEmail(enrichmentId);
+
+        if (result?.email) {
+          setAccountDetailList((prev) =>
+            prev.map((c) =>
+              c?.id === contactId ? { ...c, email: result.email, leadAccount: result.lastCompany, emailStatus: 'found' } : c
+            )
+          );
+          return;
+        }
+        console.log('result ', result);
+        if (result?.status === 'COMPLETED') {
+          setAccountDetailList((prev) =>
+            prev.map((c) =>
+              c?.id === contactId ? { ...c, emailStatus: 'not_found' } : c
+            )
+          );
+          return;
+        }
+      } catch {
+        // continua el polling si hay error puntual
+      }
+    }
+
+    setAccountDetailList((prev) =>
+      prev.map((c) =>
+        c?.id === contactId ? { ...c, emailStatus: 'not_found' } : c
+      )
+    );
+  };
+
+  const fetchContactDetails = async (contactId: string, profileUrl: string) => {
     setSelectedAccountDetail(contactId);
     setLoadingStates((prev) => ({ ...prev, details: true }));
     const currentSocialAccountId = leadAccount ? leadAccount.id : '';
-
     const contact = await getContactDetail({
       contactId,
       accountId: currentSocialAccountId,
+      profileUrl
     });
     setLoadingStates((prev) => ({ ...prev, details: false }));
     setAccountDetailList((prev) => [...prev, contact]);
+    console.log('fetchContactDetails contact ', contact);
+    if (contact?.emailStatus === 'enriching' && contact?.enrichmentId) {
+      pollForEnrichedEmail(contactId, contact.enrichmentId);
+    }
+
     return contact;
   };
 

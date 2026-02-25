@@ -22,13 +22,16 @@ import { CompanyWorkspaceEntity } from 'src/modules/company/standard-objects/com
 import { CreatePersonService } from 'src/modules/contact-creation-manager/services/create-person.service';
 import { MergeContactDto } from 'src/modules/integrations/social-accounts/dto/merge-contact.dto';
 import { PersonWorkspaceEntity } from 'src/modules/person/standard-objects/person.workspace-entity';
+import { FullEnrichService } from 'src/services/fullenrich.service';
 import { UnipileService } from 'src/services/unipile.service';
+import { getProfileUrl } from 'src/utils/social-accounts';
 
 @Injectable()
 export class SocialAccountsService {
   private readonly logger = new Logger(SocialAccountsService.name);
   constructor(
     private readonly unipileService: UnipileService,
+    private readonly fullenrichService: FullEnrichService,
     @InjectRepository(LeadUserEntity)
     private readonly leadUserRepository: Repository<LeadUserEntity>,
     @InjectRepository(UserEntity)
@@ -519,18 +522,65 @@ async disconnectAccount(provider: string, user: UserEntity) {
     );
   }
 
-  async getContactDetail(contactId: string, user: UserEntity) {
+  private extractEmailFromEnrichResult(rawContact: any): string | null {
+    const emails: { value: string; type: string }[] =
+      rawContact?.contact_info?.emails ?? rawContact?.emails ?? [];
+    const workEmail = emails.find((e) => e.type === 'work');
+    return workEmail?.value ?? emails[0]?.value ?? null;
+  }
+
+  async getEnrichmentEmail(enrichmentId: string): Promise<{ email: string | null; status: string; lastCompany: { name: string | null; position: string | null; location: string | null; startDate: string | null; endDate: string | null } }> {
+    const enrichResult = await this.fullenrichService.getEnrichResult(enrichmentId, true);
+    const status = enrichResult.status?.toUpperCase() ?? 'UNKNOWN';
+    const rawContact = enrichResult.data?.[0] as any;
+    const email = rawContact?.contact_info?.work_emails?.[0]?.email ?? this.extractEmailFromEnrichResult(rawContact);
+    const lastCompany = {
+      name: rawContact?.profile?.employment?.current?.company?.name ?? null,
+      position: rawContact?.profile?.employment?.current?.title ?? rawContact?.contact_info?.job_title ?? null,
+      location: rawContact?.profile?.employment?.current?.company?.locations?.headquarters?.country ?? null,
+      startDate: rawContact?.profile?.employment?.current?.start_at ?? null,
+      endDate: rawContact?.profile?.employment?.current?.end_at ?? null,
+    }
+    this.logger.log(`Fullenrich poll — id: ${enrichmentId}, status: ${status}, email: ${email ?? 'none'}`);
+    return { lastCompany,  email, status };
+  }
+
+  async getContactDetail({contactId, user, profileSlug}: {contactId: string, user: UserEntity, profileSlug: string}) {
+    const profileUrl = getProfileUrl('linkedin', profileSlug);
     const leadUserRes = await this.leadUserRepository.findOne({
       where: { source: LeadSource.LINKEDIN, user: { id: user.id } },
     });
 
-    if (leadUserRes) {
-      console.log('Found lead user for provider ', leadUserRes);
-    } else {
-      console.log('No lead user found for provider ');
-    }
     const accountId = leadUserRes?.providerAccountId ?? '';
-    return this.unipileService.getContactDetail(accountId, contactId);
+    const unipileResult = await this.unipileService.getContactDetail(accountId, contactId);
+
+    if (unipileResult?.email) {
+      return { ...unipileResult, emailStatus: 'found', enrichmentId: null };
+    }
+
+    this.logger.log(`No email from Unipile for ${profileUrl}, starting Fullenrich async`);
+
+    try {
+      const { enrichment_id } = await this.fullenrichService.startEnrichBulk({
+        name: `contact-detail-${contactId}`,
+        data: [{
+          linkedin_url: profileUrl,
+          first_name: unipileResult?.firstName ?? undefined,
+          last_name: unipileResult?.lastName ?? undefined,
+          enrich_fields: ['contact.emails'],
+        }],
+      });
+
+      return {
+        ...unipileResult,
+        email: '',
+        emailStatus: 'enriching',
+        enrichmentId: enrichment_id,
+      };
+    } catch (error) {
+      this.logger.warn(`Fullenrich job creation failed for ${profileUrl}`, error);
+      return { ...unipileResult, emailStatus: 'not_found', enrichmentId: null };
+    }
   }
 
   async generateMicrosoftAuthLink(

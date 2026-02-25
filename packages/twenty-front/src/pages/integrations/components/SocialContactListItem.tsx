@@ -75,7 +75,10 @@ export const SocialContactListItem = ({
         )}
       </AvatarContainer>
       <S.ContactInfo>
-        <S.Name>{displayName}</S.Name>
+        <S.ContactNameAndBadge>
+          <S.Name>{displayName}</S.Name>
+           <S.ContactBadge> {contact.isAlreadyInCrm ? 'Registered in CRM' : 'New Contact'} </S.ContactBadge>
+        </S.ContactNameAndBadge>
         <S.Headline>{contact.headline}</S.Headline>
         {
           contact?.phone && (
@@ -103,7 +106,7 @@ export const SocialContactListItem = ({
             <p>Email: {contactDetail?.email}</p>
           </S.LastJob>
         )}
-        { onShowDetails && (
+        { onShowDetails && !contactDetail && (
           <Button
             isLoading={isDetailsLoading}
             title="Show Details"
@@ -112,7 +115,10 @@ export const SocialContactListItem = ({
         )}
       </S.ContactInfo>
       <S.SwitchContainer>
-        <S.SwitchButton
+
+        {
+          !isAlreadyInCrm && (
+            <S.SwitchButton
           $active={isSelected || isAlreadyInCrm}
           aria-pressed={isSelected || isAlreadyInCrm}
           onClick={() => !isAlreadyInCrm && onToggleSelection()}
@@ -121,12 +127,10 @@ export const SocialContactListItem = ({
             opacity: isAlreadyInCrm ? 0.7 : 1,
           }}
         >
-          {isAlreadyInCrm
-            ? 'Synchronized'
-            : isSelected
-              ? 'Business account selected'
-              : 'Not Selected'}
+          {isAlreadyInCrm ? 'Registered in CRM' : isSelected ? 'Business account selected' : 'Not Selected'}
         </S.SwitchButton>
+          )
+        }
       </S.SwitchContainer>
     </S.ContactItem>
   );
