@@ -111,12 +111,12 @@ export const SocialContacts = () => {
                       </S.SocialVerifyInputsContainer>
                     </S.SocialVerifyContainer>
                   )}
-                  {!contacts?.length && !showSyncButton && (
+                  {!contacts?.length && !showSyncButton ? (
                     <LinkedInConnectForm
                       onConnectSocialAccount={connectAccount}
                       socialLoading={isLoading.connect}
                     />
-                  )}
+                  ) : null}
                 </S.SocialValidationContainer>
               </S.HeaderContactContainer>
 

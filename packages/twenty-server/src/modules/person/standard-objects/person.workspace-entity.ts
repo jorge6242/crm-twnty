@@ -1,10 +1,10 @@
 import {
-  type ActorMetadata,
-  type EmailsMetadata,
-  FieldMetadataType,
-  type FullNameMetadata,
-  type LinksMetadata,
-  type PhonesMetadata,
+    type ActorMetadata,
+    type EmailsMetadata,
+    FieldMetadataType,
+    type FullNameMetadata,
+    type LinksMetadata,
+    type PhonesMetadata,
 } from 'twenty-shared/types';
 
 import { BaseWorkspaceEntity } from 'src/engine/twenty-orm/base.workspace-entity';
@@ -17,6 +17,7 @@ import { type FavoriteWorkspaceEntity } from 'src/modules/favorite/standard-obje
 import { type MessageParticipantWorkspaceEntity } from 'src/modules/messaging/common/standard-objects/message-participant.workspace-entity';
 import { type NoteTargetWorkspaceEntity } from 'src/modules/note/standard-objects/note-target.workspace-entity';
 import { type OpportunityWorkspaceEntity } from 'src/modules/opportunity/standard-objects/opportunity.workspace-entity';
+import { type PersonJobHistoryWorkspaceEntity } from 'src/modules/person/standard-objects/person-job-history.workspace-entity';
 import { type TaskTargetWorkspaceEntity } from 'src/modules/task/standard-objects/task-target.workspace-entity';
 import { type TimelineActivityWorkspaceEntity } from 'src/modules/timeline/standard-objects/timeline-activity.workspace-entity';
 
@@ -58,5 +59,6 @@ export class PersonWorkspaceEntity extends BaseWorkspaceEntity {
     CalendarEventParticipantWorkspaceEntity[]
   >;
   timelineActivities: EntityRelation<TimelineActivityWorkspaceEntity[]>;
+  jobHistory: EntityRelation<PersonJobHistoryWorkspaceEntity[]>;
   searchVector: string;
 }

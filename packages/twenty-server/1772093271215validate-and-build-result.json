@@ -1,0 +1,51 @@
+{
+  "status": "fail",
+  "report": {
+    "fieldMetadata": [],
+    "objectMetadata": [
+      {
+        "status": "fail",
+        "errors": [
+          {
+            "code": "INVALID_OBJECT_INPUT",
+            "message": "labelIdentifierFieldMetadataId validation failed: related field metadata not found",
+            "userFriendlyMessage": {
+              "id": "75hHpn",
+              "message": "Field declared as label identifier not found"
+            }
+          }
+        ],
+        "flatEntityMinimalInformation": {
+          "id": "3487f127-05c2-45dd-b21b-30e117ba8524",
+          "universalIdentifier": "20202020-4a1b-4b2c-9d3e-8f9a0b1c2d3e",
+          "namePlural": "personJobHistories",
+          "nameSingular": "personJobHistory"
+        },
+        "metadataName": "objectMetadata",
+        "type": "create"
+      }
+    ],
+    "view": [],
+    "viewField": [],
+    "viewGroup": [],
+    "rowLevelPermissionPredicate": [],
+    "rowLevelPermissionPredicateGroup": [],
+    "viewFilterGroup": [],
+    "index": [],
+    "serverlessFunction": [],
+    "cronTrigger": [],
+    "databaseEventTrigger": [],
+    "routeTrigger": [],
+    "viewFilter": [],
+    "role": [],
+    "roleTarget": [],
+    "agent": [],
+    "skill": [],
+    "pageLayout": [],
+    "pageLayoutWidget": [],
+    "pageLayoutTab": [],
+    "commandMenuItem": [],
+    "navigationMenuItem": [],
+    "frontComponent": []
+  }
+}

@@ -5,10 +5,11 @@ import { NotesCard } from '@/activities/notes/components/NotesCard';
 import { TasksCard } from '@/activities/tasks/components/TasksCard';
 import { TimelineCard } from '@/activities/timeline-activities/components/TimelineCard';
 import { FieldsCard } from '@/object-record/record-show/components/FieldsCard';
+import { JobHistoryCard } from '@/object-record/record-show/components/JobHistoryCard';
 import {
-  type CardConfiguration,
-  type CardTypeToConfiguration,
-  type FieldCardConfiguration,
+    type CardConfiguration,
+    type CardTypeToConfiguration,
+    type FieldCardConfiguration,
 } from '@/object-record/record-show/types/CardConfiguration';
 import { CardType } from '@/object-record/record-show/types/CardType';
 import { useLayoutRenderingContext } from '@/ui/layout/contexts/LayoutRenderingContext';
@@ -84,6 +85,9 @@ export const getCardComponent = <T extends CardType>(
 
     case CardType.WorkflowRunCard:
       return <CardRenderer Component={WorkflowRunCard} />;
+
+    case CardType.JobHistoryCard:
+      return <CardRenderer Component={JobHistoryCard} />;
 
     case CardType.DashboardCard:
       throw new Error('Dashboard are handled separately currently');

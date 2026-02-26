@@ -142,6 +142,7 @@ export const COMPANY_STANDARD_FIELD_IDS = {
   attachments: '20202020-c1b5-4120-b0f0-987ca401ed53',
   timelineActivities: '20202020-0414-4daf-9c0d-64fe7b27f89f',
   searchVector: '85c71601-72f9-4b7b-b343-d46100b2c74d',
+  personJobHistories: '20202020-4a1b-4b2c-9d3e-9f0a1b2c3d4e',
 } as const;
 
 export const CONNECTED_ACCOUNT_STANDARD_FIELD_IDS = {
@@ -320,6 +321,16 @@ export const OPPORTUNITY_STANDARD_FIELD_IDS = {
   searchVector: '428a0da5-4b2e-4ce3-b695-89a8b384e6e3',
 } as const;
 
+export const PERSON_JOB_HISTORY_STANDARD_FIELD_IDS = {
+  jobTitle: '20202020-4a1b-4b2c-9d3e-1a2b3c4d5e6f',
+  startDate: '20202020-4a1b-4b2c-9d3e-2a3b4c5d6e7f',
+  endDate: '20202020-4a1b-4b2c-9d3e-3a4b5c6d7e8f',
+  isCurrent: '20202020-4a1b-4b2c-9d3e-4a5b6c7d8e9f',
+  source: '20202020-4a1b-4b2c-9d3e-5a6b7c8d9e0f',
+  person: '20202020-4a1b-4b2c-9d3e-6a7b8c9d0e1f',
+  company: '20202020-4a1b-4b2c-9d3e-7a8b9c0d1e2f',
+} as const;
+
 export const PERSON_STANDARD_FIELD_IDS = {
   name: '20202020-3875-44d5-8c33-a6239011cab8',
   email: '20202020-a740-42bb-8849-8980fb3f12e1',
@@ -346,6 +357,7 @@ export const PERSON_STANDARD_FIELD_IDS = {
   calendarEventParticipants: '20202020-52ee-45e9-a702-b64b3753e3a9',
   timelineActivities: '20202020-a43e-4873-9c23-e522de906ce5',
   searchVector: '57d1d7ad-fa10-44fc-82f3-ad0959ec2534',
+  jobHistory: '20202020-4a1b-4b2c-9d3e-8a9b0c1d2e3f',
 } as const;
 
 export const TASK_STANDARD_FIELD_IDS = {
@@ -574,6 +586,7 @@ export const STANDARD_OBJECT_FIELD_IDS = {
   noteTarget: NOTE_TARGET_STANDARD_FIELD_IDS,
   opportunity: OPPORTUNITY_STANDARD_FIELD_IDS,
   person: PERSON_STANDARD_FIELD_IDS,
+  personJobHistory: PERSON_JOB_HISTORY_STANDARD_FIELD_IDS,
   task: TASK_STANDARD_FIELD_IDS,
   taskTarget: TASK_TARGET_STANDARD_FIELD_IDS,
   timelineActivity: TIMELINE_ACTIVITY_STANDARD_FIELD_IDS,

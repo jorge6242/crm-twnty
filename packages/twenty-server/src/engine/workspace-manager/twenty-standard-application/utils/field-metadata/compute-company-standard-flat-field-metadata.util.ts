@@ -1,15 +1,15 @@
 import {
-  DateDisplayFormat,
-  FieldMetadataType,
-  RelationOnDeleteAction,
-  RelationType,
+    DateDisplayFormat,
+    FieldMetadataType,
+    RelationOnDeleteAction,
+    RelationType,
 } from 'twenty-shared/types';
 
 import { type FlatFieldMetadata } from 'src/engine/metadata-modules/flat-field-metadata/types/flat-field-metadata.type';
 import { type AllStandardObjectFieldName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-field-name.type';
 import {
-  type CreateStandardFieldArgs,
-  createStandardFieldFlatMetadata,
+    type CreateStandardFieldArgs,
+    createStandardFieldFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-field-flat-metadata.util';
 import { createStandardRelationFieldFlatMetadata } from 'src/engine/workspace-manager/twenty-standard-application/utils/field-metadata/create-standard-relation-field-flat-metadata.util';
 import { getTsVectorColumnExpressionFromFields } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
@@ -508,6 +508,29 @@ export const buildCompanyStandardFlatFieldMetadatas = ({
       isNullable: true,
       targetObjectName: 'timelineActivity',
       targetFieldName: 'targetCompany',
+      settings: {
+        relationType: RelationType.ONE_TO_MANY,
+      },
+    },
+    standardObjectMetadataRelatedEntityIds,
+    dependencyFlatEntityMaps,
+    twentyStandardApplicationId,
+    now,
+  }),
+  personJobHistories: createStandardRelationFieldFlatMetadata({
+    objectName,
+    workspaceId,
+    context: {
+      type: FieldMetadataType.RELATION,
+      morphId: null,
+      fieldName: 'personJobHistories',
+      label: 'Job Histories',
+      description: 'Job history records linked to the company',
+      icon: 'IconBriefcase',
+      isSystem: true,
+      isNullable: true,
+      targetObjectName: 'personJobHistory',
+      targetFieldName: 'company',
       settings: {
         relationType: RelationType.ONE_TO_MANY,
       },

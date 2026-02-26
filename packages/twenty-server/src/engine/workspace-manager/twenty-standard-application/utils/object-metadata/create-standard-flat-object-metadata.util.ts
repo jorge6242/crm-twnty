@@ -2,8 +2,8 @@ import { type FlatObjectMetadata } from 'src/engine/metadata-modules/flat-object
 import { STANDARD_OBJECTS } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-object.constant';
 import { type AllStandardObjectName } from 'src/engine/workspace-manager/twenty-standard-application/types/all-standard-object-name.type';
 import {
-  type CreateStandardObjectArgs,
-  createStandardObjectFlatMetadata,
+    type CreateStandardObjectArgs,
+    createStandardObjectFlatMetadata,
 } from 'src/engine/workspace-manager/twenty-standard-application/utils/object-metadata/create-standard-object-flat-metadata.util';
 
 export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
@@ -610,6 +610,36 @@ export const STANDARD_FLAT_OBJECT_METADATA_BUILDERS_BY_OBJECT_NAME = {
         ],
         labelIdentifierFieldMetadataName: 'name',
         imageIdentifierFieldMetadataName: 'avatarUrl',
+      },
+      workspaceId,
+      standardObjectMetadataRelatedEntityIds,
+      twentyStandardApplicationId,
+      now,
+    }),
+  personJobHistory: ({
+    now,
+    workspaceId,
+    standardObjectMetadataRelatedEntityIds,
+    twentyStandardApplicationId,
+    dependencyFlatEntityMaps,
+  }: Omit<
+    CreateStandardObjectArgs<'personJobHistory'>,
+    'context' | 'objectName'
+  >) =>
+    createStandardObjectFlatMetadata({
+      objectName: 'personJobHistory',
+      dependencyFlatEntityMaps,
+      context: {
+        universalIdentifier:
+          STANDARD_OBJECTS.personJobHistory.universalIdentifier,
+        nameSingular: 'personJobHistory',
+        namePlural: 'personJobHistories',
+        labelSingular: 'Job History',
+        labelPlural: 'Job Histories',
+        description: 'A record of a person\'s employment history',
+        icon: 'IconBriefcase',
+        isSystem: true,
+        labelIdentifierFieldMetadataName: 'jobTitle',
       },
       workspaceId,
       standardObjectMetadataRelatedEntityIds,

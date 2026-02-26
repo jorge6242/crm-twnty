@@ -31,6 +31,7 @@ export interface SocialContactDetail {
     description?: string;
     startDate?: string;
     endDate?: string;
+    updatedAt?: string;
   };
 }
 

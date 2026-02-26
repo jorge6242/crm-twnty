@@ -1,9 +1,9 @@
 import {
-  FieldMetadataType,
-  type ActorMetadata,
-  type AddressMetadata,
-  type CurrencyMetadata,
-  type LinksMetadata,
+    FieldMetadataType,
+    type ActorMetadata,
+    type AddressMetadata,
+    type CurrencyMetadata,
+    type LinksMetadata,
 } from 'twenty-shared/types';
 
 import { type FieldTypeAndNameMetadata } from 'src/engine/workspace-manager/utils/get-ts-vector-column-expression.util';
@@ -12,6 +12,7 @@ import { type AttachmentWorkspaceEntity } from 'src/modules/attachment/standard-
 import { type FavoriteWorkspaceEntity } from 'src/modules/favorite/standard-objects/favorite.workspace-entity';
 import { type NoteTargetWorkspaceEntity } from 'src/modules/note/standard-objects/note-target.workspace-entity';
 import { type OpportunityWorkspaceEntity } from 'src/modules/opportunity/standard-objects/opportunity.workspace-entity';
+import { type PersonJobHistoryWorkspaceEntity } from 'src/modules/person/standard-objects/person-job-history.workspace-entity';
 import { type PersonWorkspaceEntity } from 'src/modules/person/standard-objects/person.workspace-entity';
 import { type TaskTargetWorkspaceEntity } from 'src/modules/task/standard-objects/task-target.workspace-entity';
 import { type TimelineActivityWorkspaceEntity } from 'src/modules/timeline/standard-objects/timeline-activity.workspace-entity';
@@ -58,4 +59,5 @@ export class CompanyWorkspaceEntity {
   favorites: EntityRelation<FavoriteWorkspaceEntity[]>;
   attachments: EntityRelation<AttachmentWorkspaceEntity[]>;
   timelineActivities: EntityRelation<TimelineActivityWorkspaceEntity[]>;
+  personJobHistories: EntityRelation<PersonJobHistoryWorkspaceEntity[]>;
 }
