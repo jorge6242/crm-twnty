@@ -3,6 +3,20 @@ import { type RecordLayout } from '@/object-record/record-show/types/RecordLayou
 
 export const PERSON_RECORD_LAYOUT: RecordLayout = {
   tabs: {
+    jobHistory: {
+      title: 'Job History',
+      position: 550,
+      icon: 'IconBriefcase',
+      cards: [{ type: CardType.JobHistoryCard }],
+      hide: {
+        ifMobile: false,
+        ifDesktop: false,
+        ifInRightDrawer: false,
+        ifFeaturesDisabled: [],
+        ifRequiredObjectsInactive: [],
+        ifRelationsMissing: ['jobHistory'],
+      },
+    },
     emails: {
       title: 'Emails',
       position: 600,
