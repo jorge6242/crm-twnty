@@ -23,6 +23,7 @@ import { GlobalWorkspaceOrmManager } from 'src/engine/twenty-orm/global-workspac
 import { CompanyWorkspaceEntity } from 'src/modules/company/standard-objects/company.workspace-entity';
 import { CreatePersonService } from 'src/modules/contact-creation-manager/services/create-person.service';
 import { MergeContactDto } from 'src/modules/integrations/social-accounts/dto/merge-contact.dto';
+import { PersonJobHistoryWorkspaceEntity } from 'src/modules/person/standard-objects/person-job-history.workspace-entity';
 import { PersonWorkspaceEntity } from 'src/modules/person/standard-objects/person.workspace-entity';
 import { FullEnrichService } from 'src/services/fullenrich.service';
 import { UnipileService } from 'src/services/unipile.service';
@@ -426,7 +427,7 @@ async disconnectAccount(provider: string, user: UserEntity) {
 
           // Separar en personas a crear y personas a actualizar
           const peopleToInsert: Partial<PersonWorkspaceEntity>[] = [];
-          const peopleToUpdate: { id: string; updates: any }[] = [];
+          const peopleToUpdate: { id: string; updates: any; sourceData?: any; existingJobTitle?: string; existingCompanyId?: string }[] = [];
 
           for (const person of peopleToCreate) {
             const email = person.emails?.primaryEmail?.toLowerCase();
@@ -473,6 +474,9 @@ async disconnectAccount(provider: string, user: UserEntity) {
                 peopleToUpdate.push({
                   id: existingPerson.id,
                   updates,
+                  sourceData: (person as any).sourceData,
+                  existingJobTitle: existingPerson.jobTitle,
+                  existingCompanyId: existingPerson.companyId,
                 });
               }
             } else {
@@ -494,20 +498,94 @@ async disconnectAccount(provider: string, user: UserEntity) {
             createdPersons = created;
           }
 
+          // 🎯 CREAR REGISTROS DE JOB HISTORY PARA PERSONAS NUEVAS
+          const jobHistoriesToInsert: Partial<PersonJobHistoryWorkspaceEntity>[] = [];
+          const jobHistoryRepository = await this.globalWorkspaceOrmManager.getRepository(
+            workspaceId,
+            PersonJobHistoryWorkspaceEntity,
+            { shouldBypassPermissionChecks: true },
+          );
+
+          // Para cada persona creada, crear su job history inicial usando los datos originales
+          for (const createdPerson of createdPersons) {
+            const originalData = peopleToInsert.find(p => p.id === createdPerson.id);
+            const fullData = peopleToCreate.find(p => p.id === createdPerson.id) as any;
+            const sourceData = fullData?.sourceData;
+
+            // ✅ Usar originalData que tiene companyId y jobTitle completos
+            if (originalData?.companyId || originalData?.jobTitle) {
+              jobHistoriesToInsert.push({
+                id: uuidv4(),
+                personId: createdPerson.id,
+                companyId: originalData.companyId || null,
+                jobTitle: originalData.jobTitle || null,
+                startDate: sourceData?.lastCompany?.startDate || null,
+                endDate: sourceData?.lastCompany?.endDate || null,
+                isCurrent: !sourceData?.lastCompany?.endDate, // Es current si no tiene endDate
+                source: provider.toLowerCase(),
+              });
+            }
+          }
+
           // Actualizar personas existentes
           let updatedCount = 0;
+          const updatedPersonIds: string[] = [];
 
-          for (const { id, updates } of peopleToUpdate) {
+          for (const { id, updates, sourceData, existingJobTitle, existingCompanyId } of peopleToUpdate) {
             try {
               await personRepository.update(id, updates);
               updatedCount++;
+
+              // 🎯 VERIFICAR SI CAMBIÓ LA COMPANY O JOB TITLE
+              const newCompanyId = updates.companyId;
+              const newJobTitle = updates.jobTitle;
+              const hasCompanyChange = newCompanyId && newCompanyId !== existingCompanyId;
+              const hasJobTitleChange = newJobTitle && newJobTitle !== existingJobTitle;
+
+              if (hasCompanyChange || hasJobTitleChange) {
+                updatedPersonIds.push(id);
+
+                // Marcar registros anteriores como no-current
+                await jobHistoryRepository
+                  .createQueryBuilder()
+                  .update()
+                  .set({ isCurrent: false })
+                  .where('personId = :personId AND isCurrent = :isCurrent', {
+                    personId: id,
+                    isCurrent: true,
+                  })
+                  .execute();
+
+                // Crear nuevo registro de job history
+                jobHistoriesToInsert.push({
+                  id: uuidv4(),
+                  personId: id,
+                  companyId: newCompanyId || existingCompanyId || null,
+                  jobTitle: newJobTitle || existingJobTitle || null,
+                  startDate: sourceData?.lastCompany?.startDate || null,
+                  endDate: sourceData?.lastCompany?.endDate || null,
+                  isCurrent: !sourceData?.lastCompany?.endDate,
+                  source: provider.toLowerCase(),
+                });
+              }
             } catch (error) {
               console.error(`Error updating person ${id}:`, error);
             }
           }
 
+          // 🎯 INSERTAR TODOS LOS REGISTROS DE JOB HISTORY
+          let jobHistoryCreatedCount = 0;
+          if (jobHistoriesToInsert.length > 0) {
+            try {
+              await jobHistoryRepository.insert(jobHistoriesToInsert);
+              jobHistoryCreatedCount = jobHistoriesToInsert.length;
+            } catch (error) {
+              console.error('Error creating job history records:', error);
+            }
+          }
+
           console.log(
-            `Merge completed successfully: ${createdCount} people created, ${updatedCount} people updated.`,
+            `Merge completed successfully: ${createdCount} people created, ${updatedCount} people updated, ${jobHistoryCreatedCount} job history records created.`,
           );
           const companiesById = new Map(
             Array.from(uniqueCompaniesMap.values()).map((c) => [c.id, c])
