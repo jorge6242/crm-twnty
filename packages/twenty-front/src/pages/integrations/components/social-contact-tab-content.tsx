@@ -36,7 +36,7 @@ export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoadi
   }
   return (
     <div>
-            {contacts.length && (
+            {contacts.length ? (
                 <S.BodyContactContainer>
                   <S.BodyContactDetails>
                     <S.BodyContactDetails2>
@@ -94,7 +94,7 @@ export const SocialContactsTabContent = ({label, contactLabel, contacts, isLoadi
                     )}
                   </S.BodyContactDetailsContainer>
                 </S.BodyContactContainer>
-              )}
+              ) : null}
     </div>
   );
 };
