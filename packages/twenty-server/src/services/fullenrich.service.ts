@@ -7,10 +7,8 @@ import https from 'https';
 
 export type FullEnrichField =
   | 'contact.emails'
-  | 'contact.phones'
-  | 'contact.linkedin_url'
-  | 'contact.company_name'
-  | 'contact.job_title';
+  | 'contact.personal_emails'
+  | 'contact.phones';
 
 export interface FullEnrichContact {
   first_name?: string;

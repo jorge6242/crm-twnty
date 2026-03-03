@@ -2,6 +2,8 @@ import { Logger } from '@nestjs/common';
 
 import { Command, CommandRunner } from 'nest-commander';
 
+import { EnqueuePeopleEnrichmentCronCommand } from 'src/engine/core-modules/enrichment/crons/commands/enqueue-people-enrichment.cron.command';
+import { ProcessPeopleEnrichmentResultsCronCommand } from 'src/engine/core-modules/enrichment/crons/commands/process-people-enrichment-results.cron.command';
 import { CheckPublicDomainsValidRecordsCronCommand } from 'src/engine/core-modules/public-domain/crons/commands/check-public-domains-valid-records.cron.command';
 import { CheckCustomDomainValidRecordsCronCommand } from 'src/engine/core-modules/workspace/crons/commands/check-custom-domain-valid-records.cron.command';
 import { CronTriggerCronCommand } from 'src/engine/metadata-modules/cron-trigger/crons/commands/cron-trigger.cron.command';
@@ -50,6 +52,8 @@ export class CronRegisterAllCommand extends CommandRunner {
     private readonly cleanSuspendedWorkspacesCronCommand: CleanSuspendedWorkspacesCronCommand,
     private readonly cleanOnboardingWorkspacesCronCommand: CleanOnboardingWorkspacesCronCommand,
     private readonly trashCleanupCronCommand: TrashCleanupCronCommand,
+    private readonly enqueuePeopleEnrichmentCronCommand: EnqueuePeopleEnrichmentCronCommand,
+    private readonly processPeopleEnrichmentResultsCronCommand: ProcessPeopleEnrichmentResultsCronCommand,
   ) {
     super();
   }
@@ -129,6 +133,14 @@ export class CronRegisterAllCommand extends CommandRunner {
       {
         name: 'TrashCleanup',
         command: this.trashCleanupCronCommand,
+      },
+      {
+        name: 'EnqueuePeopleEnrichment',
+        command: this.enqueuePeopleEnrichmentCronCommand,
+      },
+      {
+        name: 'ProcessPeopleEnrichmentResults',
+        command: this.processPeopleEnrichmentResultsCronCommand,
       },
     ];
 

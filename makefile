@@ -59,7 +59,7 @@ setup:
 	@echo "🗄️ Resetting database schema and seeding data..."
 	docker exec -it twenty-app npx nx database:reset twenty-server
 	@echo "✅ Setup complete!"
-	@echo "✅ You can now run 'make backend' and 'make frontend'."
+	@echo "✅ You can now run 'make start-all' (or 'make backend' + 'make worker' + 'make frontend' separately)."
 
 # ☀️ UP: Daily development startup. Instantaneous as it doesn't reinstall anything.
 up:
@@ -118,9 +118,17 @@ workspace-sync:
 backend:
 	docker exec -it twenty-app npx nx start twenty-server
 
+# Start the Worker service (processes cronjobs)
+worker:
+	docker exec -it twenty-app npx nx run twenty-server:worker
+
 # Start the Frontend service
 frontend:
 	docker exec -it twenty-app npx nx start twenty-front
+
+# Start everything (Backend + Frontend + Worker) - Recommended for full development
+start-all:
+	docker exec -it twenty-app yarn start
 
 
 # ==========================================
@@ -164,17 +172,26 @@ shell:
 #
 # 📖 WORKFLOW 1: First-time setup
 #    $ make setup
-#    $ make backend    (in terminal 1)
-#    $ make frontend   (in terminal 2)
+#    $ make start-all   (starts backend + frontend + worker in one terminal)
+#    OR separately:
+#    $ make backend     (in terminal 1)
+#    $ make worker      (in terminal 2)
+#    $ make frontend    (in terminal 3)
 #
 # 📖 WORKFLOW 2: Daily development
 #    $ make up
-#    $ make backend
-#    $ make frontend
+#    $ make start-all   (or make backend + make worker + make frontend separately)
 #    # ... end of day ...
 #    $ make stop-all
 #
-# 📖 WORKFLOW 3: Adding a new standard object (like PersonJobHistory)
+# 📖 WORKFLOW 3: Testing cronjobs (requires worker)
+#    $ make up
+#    $ docker exec -it twenty-app npx nx run twenty-server:command -- cron:register:all
+#    $ make start-all   (includes worker that executes cronjobs)
+#    # Watch logs in another terminal:
+#    $ make logs
+#
+# 📖 WORKFLOW 4: Adding a new standard object (like PersonJobHistory)
 #    1. Create your .workspace-entity.ts file
 #    2. Add IDs in standard-object-ids.ts and standard-field-ids.ts
 #    3. Register in standard-object.constant.ts
@@ -185,18 +202,18 @@ shell:
 #    8. Run: make workspace-sync
 #    9. Verify: make verify-object OBJECT=yourObjectName
 #
-# 📖 WORKFLOW 4: When workspace-sync fails with validation errors
+# 📖 WORKFLOW 5: When workspace-sync fails with validation errors
 #    This usually means your DB has inconsistent state. Solutions:
 #    - Quick fix (dev only): make db-reset
 #    - Investigate: make db-shell (then run SQL queries to check state)
 #    - Check logs: make logs
 #
-# 📖 WORKFLOW 5: Rebuilding after code changes
+# 📖 WORKFLOW 6: Rebuilding after code changes
 #    - Code-only changes: make rebuild
 #    - New entity/schema changes: make rebuild && make workspace-sync
 #    - Everything broken: make db-reset
 #
-# 📖 WORKFLOW 6: Verifying your changes
+# 📖 WORKFLOW 7: Verifying your changes
 #    $ make verify-object OBJECT=personJobHistory
 #    $ make list-objects
 #    $ make db-info
