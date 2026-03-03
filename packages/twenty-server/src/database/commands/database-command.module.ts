@@ -10,6 +10,7 @@ import { SyncWorkspaceStandardObjectsCommand } from 'src/database/commands/sync-
 import { UpgradeVersionCommandModule } from 'src/database/commands/upgrade-version-command/upgrade-version-command.module';
 import { TypeORMModule } from 'src/database/typeorm/typeorm.module';
 import { ApiKeyModule } from 'src/engine/core-modules/api-key/api-key.module';
+import { EnrichmentModule } from 'src/engine/core-modules/enrichment/enrichment.module';
 import { FeatureFlagModule } from 'src/engine/core-modules/feature-flag/feature-flag.module';
 import { FileModule } from 'src/engine/core-modules/file/file.module';
 import { PublicDomainModule } from 'src/engine/core-modules/public-domain/public-domain.module';
@@ -60,6 +61,7 @@ import { AutomatedTriggerModule } from 'src/modules/workflow/workflow-trigger/au
     TrashCleanupModule,
     PublicDomainModule,
     TwentyStandardApplicationModule,
+    EnrichmentModule,
   ],
   providers: [
     ComputeTwentyStandardWorkspaceMigrationCommand,
