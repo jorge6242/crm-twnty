@@ -10,7 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useRecoilState, useSetRecoilState } from 'recoil';
 import { SettingsPath } from 'twenty-shared/types';
 import { getSettingsPath } from 'twenty-shared/utils';
-import { IconSearch, IconSettings, IconSparkles, IconUsers } from 'twenty-ui/display';
+import { IconSearch, IconSettings, IconSparkles, IconUpload, IconUsers } from 'twenty-ui/display';
 import { useIsMobile } from 'twenty-ui/utilities';
 import { FeatureFlagKey } from '~/generated/graphql';
 
@@ -62,6 +62,15 @@ export const MainNavigationDrawerFixedItems = () => {
             navigate('/integrations/social-contacts');
           }}
           Icon={IconUsers}
+        />
+        <NavigationDrawerItem
+          label={t`Import Contacts`}
+          to="/integrations/people-import"
+          onClick={() => {
+            setNavigationMemorizedUrl(location.pathname + location.search);
+            navigate('/integrations/people-import');
+          }}
+          Icon={IconUpload}
         />
         <NavigationDrawerItem
           label={t`Settings`}

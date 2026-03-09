@@ -3,6 +3,7 @@ export type ImportRowStatus = 'created' | 'updated' | 'skipped' | 'error';
 export class ImportRowResult {
   row: number;
   status: ImportRowStatus;
+  name?: string;
   email?: string;
   message?: string;
 }

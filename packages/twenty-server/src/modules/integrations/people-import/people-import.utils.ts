@@ -33,6 +33,7 @@ export type UpdateEntry = {
   id: string;
   data: Partial<PersonWorkspaceEntity>;
   email: string;
+  name?: string;
 };
 
 // ── Constants ────────────────────────────────────────────────────────────────
@@ -349,6 +350,25 @@ export function extractEntityEmail(
   const emails = entity.emails as EmailsMetadata | undefined;
 
   return emails?.primaryEmail ?? '';
+}
+
+/**
+ * Safely extracts the full name from a partial `PersonWorkspaceEntity`.
+ *
+ * @param entity - Partial person entity that may or may not have name set
+ * @returns The full name string (firstName + lastName), or `undefined` if empty
+ */
+export function extractEntityName(
+  entity: Partial<PersonWorkspaceEntity>,
+): string | undefined {
+  const nameField = entity.name as
+    | { firstName?: string; lastName?: string }
+    | undefined;
+  const full = [nameField?.firstName, nameField?.lastName]
+    .filter(Boolean)
+    .join(' ');
+
+  return full || undefined;
 }
 
 /**

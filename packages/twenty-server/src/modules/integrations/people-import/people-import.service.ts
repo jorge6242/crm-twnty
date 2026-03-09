@@ -15,6 +15,7 @@ import {
   createEmptySummary,
   createSummary,
   extractEntityEmail,
+  extractEntityName,
   extractPrimaryCompany,
   mapRow,
   parseCsv,
@@ -212,9 +213,14 @@ export class PeopleImportService {
       const email = mapped.email?.trim() || '';
 
       if (!email) {
+        const name = [mapped.firstName, mapped.lastName]
+          .filter(Boolean)
+          .join(' ');
+
         summary.rows.push({
           row: rowNumber,
           status: 'error',
+          name: name || undefined,
           message: 'Email is required',
         });
         summary.errors++;
@@ -307,9 +313,14 @@ export class PeopleImportService {
       }
 
       if (conflictStrategy === 'skip') {
+        const name = [mapped.firstName, mapped.lastName]
+          .filter(Boolean)
+          .join(' ');
+
         summary.rows.push({
           row: rowNumber,
           status: 'skipped',
+          name: name || undefined,
           email,
           message: 'Person with this email already exists',
         });
@@ -325,11 +336,16 @@ export class PeopleImportService {
         });
         positionOffset++;
       } else {
+        const updateName = [mapped.firstName, mapped.lastName]
+          .filter(Boolean)
+          .join(' ');
+
         toUpdate.push({
           rowNumber,
           id: existing.id,
           data: buildPersonUpdate(mapped, companyId),
           email,
+          name: updateName || undefined,
         });
       }
     }
@@ -378,6 +394,7 @@ export class PeopleImportService {
       summary.rows.push({
         row: rowNumber,
         status: 'created',
+        name: extractEntityName(entity),
         email: extractEntityEmail(entity),
       });
       summary.created++;
@@ -399,15 +416,17 @@ export class PeopleImportService {
   ): Promise<void> {
     for (const { rowNumber, entity } of batch) {
       const email = extractEntityEmail(entity);
+      const name = extractEntityName(entity);
 
       try {
         await personRepo.insert(entity);
-        summary.rows.push({ row: rowNumber, status: 'created', email });
+        summary.rows.push({ row: rowNumber, status: 'created', name, email });
         summary.created++;
       } catch (err) {
         summary.rows.push({
           row: rowNumber,
           status: 'error',
+          name,
           email,
           message: err instanceof Error ? err.message : String(err),
         });
@@ -429,15 +448,16 @@ export class PeopleImportService {
     personRepo: WorkspaceRepository<PersonWorkspaceEntity>,
     summary: ImportSummaryDto,
   ): Promise<void> {
-    for (const { rowNumber, id, data, email } of toUpdate) {
+    for (const { rowNumber, id, data, email, name } of toUpdate) {
       try {
         await personRepo.update(id, data);
-        summary.rows.push({ row: rowNumber, status: 'updated', email });
+        summary.rows.push({ row: rowNumber, status: 'updated', name, email });
         summary.updated++;
       } catch (err) {
         summary.rows.push({
           row: rowNumber,
           status: 'error',
+          name,
           email,
           message: err instanceof Error ? err.message : String(err),
         });
