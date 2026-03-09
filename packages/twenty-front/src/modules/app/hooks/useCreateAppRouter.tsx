@@ -9,13 +9,14 @@ import { DefaultLayout } from '@/ui/layout/page/components/DefaultLayout';
 import { AppPath } from 'twenty-shared/types';
 
 import {
-  createBrowserRouter,
-  createRoutesFromElements,
-  Route,
+    createBrowserRouter,
+    createRoutesFromElements,
+    Route,
 } from 'react-router-dom';
 import { Authorize } from '~/pages/auth/Authorize';
 import { PasswordReset } from '~/pages/auth/PasswordReset';
 import { SignInUp } from '~/pages/auth/SignInUp';
+import { PeopleImport } from '~/pages/integrations/PeopleImport';
 import { SocialContacts } from '~/pages/integrations/SocialContacts';
 import { NotFound } from '~/pages/not-found/NotFound';
 import { RecordIndexPage } from '~/pages/object-record/RecordIndexPage';
@@ -65,6 +66,7 @@ export const useCreateAppRouter = (
           <Route path={AppPath.RecordIndexPage} element={<RecordIndexPage />} />
           <Route path={AppPath.RecordShowPage} element={<RecordShowPage />} />
           <Route path="/integrations/social-contacts" element={<SocialContacts />} />
+          <Route path="/integrations/people-import" element={<PeopleImport />} />
           <Route
             path={AppPath.SettingsCatchAll}
             element={
