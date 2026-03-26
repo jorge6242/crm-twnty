@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: Lint, Typecheck & Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: ./.github/actions/yarn-install
+
+      - name: Get last successful commit
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Lint affected
+        run: npx nx affected --nxBail -t lint --parallel=3
+
+      - name: Typecheck affected
+        run: npx nx affected --nxBail -t typecheck --parallel=3
+
+      - name: Build affected
+        run: npx nx affected --nxBail -t build --parallel=3
