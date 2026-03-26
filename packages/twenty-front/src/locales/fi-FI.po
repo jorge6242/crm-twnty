@@ -6317,6 +6317,11 @@ msgstr "Tuo"
 msgid "Import all emails"
 msgstr "Tuo kaikki sähköpostit"
 
+#. js-lingui-id: t8ME4R
+#: src/modules/navigation/components/MainNavigationDrawerFixedItems.tsx
+msgid "Import Contacts"
+msgstr ""
+
 #. js-lingui-id: 2CeOI3
 #: src/modules/settings/roles/role-permissions/permission-flags/hooks/useActionRolePermissionFlagConfig.ts
 msgid "Import CSV"
@@ -10910,6 +10915,11 @@ msgstr "SMTP-käyttäjänimi"
 #: src/modules/settings/accounts/components/SettingsAccountsConnectionForm.tsx
 msgid "smtp.example.com"
 msgstr "smtp.example.com"
+
+#. js-lingui-id: MyYTEw
+#: src/modules/navigation/components/MainNavigationDrawerFixedItems.tsx
+msgid "Social Contacts"
+msgstr ""
 
 #. js-lingui-id: zfjcH5
 #: src/modules/settings/roles/role-permissions/object-level-permissions/components/SettingsRolePermissionsObjectLevelUpdateFieldsValueForObject.tsx
