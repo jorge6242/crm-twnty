@@ -7421,6 +7421,11 @@ msgstr "Merge preview"
 msgid "Merge records"
 msgstr "Merge records"
 
+#. js-lingui-id: r9/87n
+#: src/modules/navigation/components/MainNavigationDrawerFixedItems.tsx
+msgid "Merge Social Contacts"
+msgstr "Merge Social Contacts"
+
 #. js-lingui-id: LuriZ0
 #: src/modules/object-record/record-merge/components/MergeRecordsFooter.tsx
 msgid "Merging..."
@@ -10913,8 +10918,8 @@ msgstr "smtp.example.com"
 
 #. js-lingui-id: MyYTEw
 #: src/modules/navigation/components/MainNavigationDrawerFixedItems.tsx
-msgid "Social Contacts"
-msgstr "Social Contacts"
+#~ msgid "Social Contacts"
+#~ msgstr "Social Contacts"
 
 #. js-lingui-id: zfjcH5
 #: src/modules/settings/roles/role-permissions/object-level-permissions/components/SettingsRolePermissionsObjectLevelUpdateFieldsValueForObject.tsx
