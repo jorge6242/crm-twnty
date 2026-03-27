@@ -55,7 +55,7 @@ export const MainNavigationDrawerFixedItems = () => {
           />
         )}
         <NavigationDrawerItem
-          label={t`Social Contacts`}
+          label="Social Contacts"
           to="/integrations/social-contacts"
           onClick={() => {
             setNavigationMemorizedUrl(location.pathname + location.search);
@@ -64,7 +64,7 @@ export const MainNavigationDrawerFixedItems = () => {
           Icon={IconUsers}
         />
         <NavigationDrawerItem
-          label={t`Import Contacts`}
+          label="Import Contacts"
           to="/integrations/people-import"
           onClick={() => {
             setNavigationMemorizedUrl(location.pathname + location.search);
