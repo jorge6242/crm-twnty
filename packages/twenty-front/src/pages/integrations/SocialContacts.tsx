@@ -40,19 +40,16 @@ export const SocialContacts = () => {
   return (
     <S.StyledContainer>
       <S.StyledCardWrapper>
-        <H3Title title='Integration of social media contacts' ></H3Title>
+        <H3Title title="Merge Social media contacts"></H3Title>
 
-        <S.StyledTabBar
-          role="tablist"
-          aria-label="Integraciones de redes sociales"
-        >
+        <S.StyledTabBar role="tablist" aria-label="Merge Social media contacts">
           <S.StyledTabButton
             $active={activeTab === 'linkedin'}
             role="tab"
             aria-selected={activeTab === 'linkedin'}
             onClick={() => setActiveTab('linkedin')}
           >
-            <H3Title title='LinkedIn' ></H3Title>
+            <H3Title title="LinkedIn"></H3Title>
           </S.StyledTabButton>
 
           <S.StyledTabButton
@@ -61,7 +58,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'whatsapp'}
             onClick={() => setActiveTab('whatsapp')}
           >
-            <H3Title title='WhatsApp' ></H3Title>
+            <H3Title title="WhatsApp"></H3Title>
           </S.StyledTabButton>
 
           <S.StyledTabButton
@@ -70,7 +67,7 @@ export const SocialContacts = () => {
             aria-selected={activeTab === 'email'}
             onClick={() => setActiveTab('email')}
           >
-            <H3Title title='Microsoft Outlook' ></H3Title>
+            <H3Title title="Microsoft Outlook"></H3Title>
           </S.StyledTabButton>
         </S.StyledTabBar>
 
@@ -80,7 +77,9 @@ export const SocialContacts = () => {
               <S.HeaderContactContainer>
                 <S.SocialValidationContainer>
                   {!contacts.length && (
-                    <S.StyledMessage>Connect your LinkedIn account</S.StyledMessage>
+                    <S.StyledMessage>
+                      Connect your LinkedIn account
+                    </S.StyledMessage>
                   )}
                   {!contacts?.length && showSyncButton && (
                     <S.SocialVerifyContainer>
@@ -142,42 +141,52 @@ export const SocialContacts = () => {
 
           {activeTab === 'whatsapp' && (
             <>
-                 {!contacts.length ? <WhatsAppConnectButton fetchContacts={fetchContacts} fetchLeadUserAccounts={fetchLeadUserAccounts} /> : (
-                  <SocialContactsTabContent
-                    contacts={contacts}
-                    isLoading={isLoading}
-                    leadAccount={leadAccount}
-                    selectedCount={selectedCount}
-                    disconnectAccount={disconnectAccount}
-                    mergeSelectedContacts={mergeSelectedContacts}
-                    toggleContactSelection={toggleContactSelection}
-                    fetchContactDetails={null}
-                    accountDetailList={accountDetailList}
-                    businessMap={businessMap}
-                    selectedAccountDetail={selectedAccountDetail}
-                    nextCursor={nextCursor}
-                    loadMoreContacts={loadMoreContacts}
-                    contactLabel="WhatsApp contact"
-                    label="WhatsApp contacts"
-                    refresh={fetchContacts}
-                  />
-                )}
+              {!contacts.length ? (
+                <WhatsAppConnectButton
+                  fetchContacts={fetchContacts}
+                  fetchLeadUserAccounts={fetchLeadUserAccounts}
+                />
+              ) : (
+                <SocialContactsTabContent
+                  contacts={contacts}
+                  isLoading={isLoading}
+                  leadAccount={leadAccount}
+                  selectedCount={selectedCount}
+                  disconnectAccount={disconnectAccount}
+                  mergeSelectedContacts={mergeSelectedContacts}
+                  toggleContactSelection={toggleContactSelection}
+                  fetchContactDetails={null}
+                  accountDetailList={accountDetailList}
+                  businessMap={businessMap}
+                  selectedAccountDetail={selectedAccountDetail}
+                  nextCursor={nextCursor}
+                  loadMoreContacts={loadMoreContacts}
+                  contactLabel="WhatsApp contact"
+                  label="WhatsApp contacts"
+                  refresh={fetchContacts}
+                />
+              )}
             </>
           )}
 
           {activeTab === 'email' && (
             <>
-          {!contacts.length && !leadAccount && !isMicrosoftConnected ? (
-            <div>
-              <S.StyledMessage>Connect your Microsoft Outlook account to access emails</S.StyledMessage>
-              <Button
-                isLoading={isMicrosoftLoading}
-                title="Connect Microsoft Outlook"
-                onClick={() => connectMicrosoft(`${window.location.origin}/integrations/social-contacts`)}
-              />
-            </div>
-    ) : (
-
+              {!contacts.length && !leadAccount && !isMicrosoftConnected ? (
+                <div>
+                  <S.StyledMessage>
+                    Connect your Microsoft Outlook account to access emails
+                  </S.StyledMessage>
+                  <Button
+                    isLoading={isMicrosoftLoading}
+                    title="Connect Microsoft Outlook"
+                    onClick={() =>
+                      connectMicrosoft(
+                        `${window.location.origin}/integrations/social-contacts`,
+                      )
+                    }
+                  />
+                </div>
+              ) : (
                 <SocialContactsTabContent
                   contacts={contacts}
                   isLoading={isLoading}
@@ -195,9 +204,8 @@ export const SocialContacts = () => {
                   contactLabel="Microsoft Outlook contact"
                   label="Microsoft Outlook contacts"
                 />
-
-    )}
-  </>
+              )}
+            </>
           )}
         </S.TabContent>
       </S.StyledCardWrapper>
