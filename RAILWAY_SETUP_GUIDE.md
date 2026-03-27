@@ -1,5 +1,30 @@
 # Railway Setup Guide — Twenty CRM
 
+```mermaid
+flowchart TD
+    GH[GitHub Push to main] --> GA[GitHub Actions]
+    GA --> BUILD["Docker Build Image\n(React + NestJS)"]
+    BUILD --> PUSH["Push to GHCR\n ghcr.io/symbiosem/symbiosecrm"]
+
+    PUSH --> GA_DEPLOY["GitHub Actions triggers Railway CLI"]
+    GA_DEPLOY --> DEPLOY_API["railway redeploy --service api"]
+    GA_DEPLOY --> DEPLOY_WK["railway redeploy --service worker"]
+
+    subgraph RW_BOX[Railway Project]
+        API["API + Frontend Service\nSource: GHCR Image"]
+        WK["Worker Service\nSource: GHCR Image"]
+        PG[PostgreSQL Plugin]
+        RD[Redis Plugin]
+    end
+
+    DEPLOY_API --> API
+    DEPLOY_WK --> WK
+    API --> PG
+    API --> RD
+    WK --> PG
+    WK --> RD
+```
+
 Step-by-step technical guide for deploying Twenty CRM on Railway. This documents the exact steps taken to get the application running.
 
 ## Prerequisites
