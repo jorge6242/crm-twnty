@@ -61,7 +61,7 @@ export const MainNavigationDrawerFixedItems = () => {
           />
         )}
         <NavigationDrawerItem
-          label="Import Social Contacts"
+          label={t`Merge Social Contacts`}
           to="/integrations/social-contacts"
           onClick={() => {
             setNavigationMemorizedUrl(location.pathname + location.search);
