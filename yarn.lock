@@ -57738,6 +57738,7 @@ __metadata:
     pluralize: "npm:8.0.0"
     postal-mime: "npm:^2.6.1"
     psl: "npm:^1.9.0"
+    qrcode: "npm:^1.5.4"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
     redis: "npm:^4.7.0"

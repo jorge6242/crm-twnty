@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(railway login:*)",
+      "Bash(railway up:*)",
+      "Bash(railway status:*)",
+      "Bash(RAILWAY_TOKEN=\"57238d4c-dc4c-4b8a-b2bc-92cb063f4c79\" railway whoami)",
+      "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway whoami)",
+      "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway status)",
+      "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway up --service c4db3a77-e5e2-4c09-be74-72f55d309d1b)",
+      "Bash(yarn install:*)"
+    ]
+  }
+}
