@@ -35,7 +35,12 @@ jobs:
 
       - name: Terraform Apply
         working-directory: terraform
-        run: terraform apply -auto-approve
+        run: |
+          if ! terraform apply -auto-approve 2>&1; then
+            echo "Apply failed — removing stale service domain from state and retrying..."
+            terraform state rm railway_service_domain.crm_api 2>/dev/null || true
+            terraform apply -auto-approve
+          fi
 
   # ──────────────────────────────────────────────
   # Job 1: Build Docker image once, push to GHCR
