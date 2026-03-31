@@ -36,6 +36,38 @@ jobs:
         working-directory: terraform
         run: terraform init
 
+      - name: Repair stale state
+        working-directory: terraform
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          check_service() {
+            local id=$1
+            local result=$(curl -s \
+              --request POST \
+              --header "Authorization: Bearer $RAILWAY_TOKEN" \
+              --header "Content-Type: application/json" \
+              --data "{\"query\":\"{ service(id: \\\"$id\\\") { id } }\"}" \
+              https://backboard.railway.app/graphql/v2)
+            echo "$result" | grep -q '"errors"' && return 1 || return 0
+          }
+
+          API_ID=$(terraform output -raw api_service_id 2>/dev/null || echo "")
+          WORKER_ID=$(terraform output -raw worker_service_id 2>/dev/null || echo "")
+
+          if [ -n "$API_ID" ] && ! check_service "$API_ID"; then
+            echo "CRM API service not found in Railway — removing from state"
+            terraform state rm railway_service.crm_api 2>/dev/null || true
+            terraform state rm railway_service_domain.crm_api 2>/dev/null || true
+            terraform state rm railway_variable_collection.crm_api_vars 2>/dev/null || true
+          fi
+
+          if [ -n "$WORKER_ID" ] && ! check_service "$WORKER_ID"; then
+            echo "Worker service not found in Railway — removing from state"
+            terraform state rm railway_service.crm_worker 2>/dev/null || true
+            terraform state rm railway_variable_collection.crm_worker_vars 2>/dev/null || true
+          fi
+
       - name: Terraform Apply
         working-directory: terraform
         run: |
