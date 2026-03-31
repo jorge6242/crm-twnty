@@ -7,11 +7,6 @@ resource "railway_service" "crm_api" {
   source_image = "jgomez6242/symbiosecrm:latest"
 }
 
-resource "railway_service_domain" "crm_api" {
-  subdomain      = "crmt-twenty"
-  environment_id = local.environment_id
-  service_id     = railway_service.crm_api.id
-}
 
 resource "railway_variable_collection" "crm_api_vars" {
   environment_id = local.environment_id

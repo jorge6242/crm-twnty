@@ -66,12 +66,23 @@ jobs:
             terraform state rm railway_variable_collection.crm_worker_vars 2>/dev/null || true
           fi
 
-          echo "Removing service domain from state — Terraform will recreate if missing"
-          terraform state rm railway_service_domain.crm_api 2>/dev/null || true
-
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
+
+      - name: Ensure CRM domain exists
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+        run: |
+          API_ID=$(cd terraform && terraform output -raw api_service_id)
+          RESPONSE=$(curl -s \
+            --request POST \
+            --header "Authorization: Bearer $RAILWAY_TOKEN" \
+            --header "Content-Type: application/json" \
+            --data "{\"query\":\"mutation { serviceDomainCreate(input: { serviceId: \\\"$API_ID\\\", environmentId: \\\"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\\\", domain: \\\"crmt-twenty\\\" }) { id domain } }\"}" \
+            https://backboard.railway.app/graphql/v2)
+          echo "Domain response: $RESPONSE"
+          echo "$RESPONSE" | grep -q '"domain"' && echo "Domain ready" || echo "Domain may already exist or creation skipped"
 
       - name: Get service IDs from Terraform output
         id: tf-output
