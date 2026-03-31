@@ -92,30 +92,32 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ensure-infrastructure, build-and-push]
     steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Trigger API redeploy
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Trigger API redeploy via Railway API
         run: |
-          railway redeploy --service ${{ secrets.RAILWAY_API_SERVICE_ID }} -y
-          echo "API redeploy triggered successfully"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --request POST \
+            --header "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ secrets.RAILWAY_API_SERVICE_ID }}\") }"}' \
+            https://backboard.railway.app/graphql/v2)
+          echo "Railway API response: HTTP $RESPONSE"
+          [ "$RESPONSE" = "200" ] || exit 1
 
   deploy-worker:
     name: Deploy Worker Service
     runs-on: ubuntu-latest
-    needs: [build-and-push]
+    needs: [ensure-infrastructure, build-and-push]
     steps:
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Trigger Worker redeploy
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+      - name: Trigger Worker redeploy via Railway API
         run: |
-          railway redeploy --service ${{ secrets.RAILWAY_WORKER_SERVICE_ID }} -y
-          echo "Worker redeploy triggered successfully"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --request POST \
+            --header "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ secrets.RAILWAY_WORKER_SERVICE_ID }}\") }"}' \
+            https://backboard.railway.app/graphql/v2)
+          echo "Railway API response: HTTP $RESPONSE"
+          [ "$RESPONSE" = "200" ] || exit 1
 
   # ──────────────────────────────────────────────
   # Job 3: Verify deployment health
