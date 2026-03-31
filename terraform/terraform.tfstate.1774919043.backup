@@ -1,0 +1,1701 @@
+{
+  "version": 4,
+  "terraform_version": "1.11.4",
+  "serial": 67,
+  "lineage": "19c74624-13db-70da-cafc-9dca95ebf93c",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "railway_service",
+      "name": "crm_api",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "config_path": null,
+            "cron_schedule": null,
+            "id": "f783e630-2266-40d5-83d2-024fdb686680",
+            "name": "CRM",
+            "num_replicas": 1,
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "region": "us-west1",
+            "root_directory": null,
+            "source_image": "jgomez6242/symbiosecrm:latest",
+            "source_image_registry_password": null,
+            "source_image_registry_username": null,
+            "source_repo": null,
+            "source_repo_branch": null,
+            "volume": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "source_image_registry_password"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_service",
+      "name": "crm_worker",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "config_path": null,
+            "cron_schedule": null,
+            "id": "5326be2b-c9a3-450a-ae45-173c95416842",
+            "name": "crm_worker",
+            "num_replicas": 1,
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "region": "us-west1",
+            "root_directory": null,
+            "source_image": "jgomez6242/symbiosecrm:latest",
+            "source_image_registry_password": null,
+            "source_image_registry_username": null,
+            "source_repo": null,
+            "source_repo_branch": null,
+            "volume": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "source_image_registry_password"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_service",
+      "name": "postgres",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "config_path": null,
+            "cron_schedule": null,
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "name": "Postgres",
+            "num_replicas": 1,
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "region": "us-west1",
+            "root_directory": null,
+            "source_image": "ghcr.io/railwayapp-templates/postgres-ssl:18",
+            "source_image_registry_password": null,
+            "source_image_registry_username": null,
+            "source_repo": null,
+            "source_repo_branch": null,
+            "volume": {
+              "id": "65cfa94b-ccd4-4731-b390-7d720d2ce481",
+              "mount_path": "/var/lib/postgresql/data",
+              "name": "postgres-volume",
+              "size": 500
+            }
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "source_image_registry_password"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_service",
+      "name": "redis",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "config_path": null,
+            "cron_schedule": null,
+            "id": "f346a50d-96b3-4176-8a95-db47ac4fd944",
+            "name": "Redis",
+            "num_replicas": 1,
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "region": "us-west1",
+            "root_directory": null,
+            "source_image": "redis:8.2.1",
+            "source_image_registry_password": null,
+            "source_image_registry_username": null,
+            "source_repo": null,
+            "source_repo_branch": null,
+            "volume": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "source_image_registry_password"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_service_domain",
+      "name": "crm_api",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "domain": "crmt-twenty.up.railway.app",
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "5fc0e80b-cd06-4e3d-a89d-94b4098f2bd0",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f783e630-2266-40d5-83d2-024fdb686680",
+            "subdomain": "crmt-twenty",
+            "suffix": "up.railway.app"
+          },
+          "sensitive_attributes": [],
+          "dependencies": [
+            "railway_service.crm_api"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_tcp_proxy",
+      "name": "postgres",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "application_port": 5432,
+            "domain": "hopper.proxy.rlwy.net",
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "046b31ad-9354-40a2-9cc1-86b8d605cd87",
+            "proxy_port": 47040,
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d"
+          },
+          "sensitive_attributes": [],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_tcp_proxy",
+      "name": "redis",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "application_port": 6379,
+            "domain": "hopper.proxy.rlwy.net",
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "e3ecddc8-8996-4243-aeda-631754a856bf",
+            "proxy_port": 14362,
+            "service_id": "f346a50d-96b3-4176-8a95-db47ac4fd944"
+          },
+          "sensitive_attributes": [],
+          "dependencies": [
+            "railway_service.redis"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "postgres_database_url",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d:33fdf604-2086-4df5-8673-5b45d81a0588:DATABASE_URL",
+            "name": "DATABASE_URL",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "value": "postgresql://postgres:3HhDZXWijsgUAnUIIjytKvMvq%2FjWTBYq@postgres-8f68.railway.internal:5432/postgres"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "postgres_db",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d:33fdf604-2086-4df5-8673-5b45d81a0588:POSTGRES_DB",
+            "name": "POSTGRES_DB",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "value": "railway"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "postgres_password",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d:33fdf604-2086-4df5-8673-5b45d81a0588:POSTGRES_PASSWORD",
+            "name": "POSTGRES_PASSWORD",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "value": "3HhDZXWijsgUAnUIIjytKvMvq/jWTBYq"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "postgres_pgdata",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d:33fdf604-2086-4df5-8673-5b45d81a0588:PGDATA",
+            "name": "PGDATA",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "value": "/var/lib/postgresql/data/pgdata"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "postgres_user",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d:33fdf604-2086-4df5-8673-5b45d81a0588:POSTGRES_USER",
+            "name": "POSTGRES_USER",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f2c15a7a-1fe4-4c83-bd51-4ed978a3519d",
+            "value": "postgres"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.postgres"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "redis_password",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f346a50d-96b3-4176-8a95-db47ac4fd944:33fdf604-2086-4df5-8673-5b45d81a0588:REDIS_PASSWORD",
+            "name": "REDIS_PASSWORD",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f346a50d-96b3-4176-8a95-db47ac4fd944",
+            "value": "3da7012daf5bb796b45f257c33c382f18b2c747d4f9bb248"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.redis"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable",
+      "name": "redis_url",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f346a50d-96b3-4176-8a95-db47ac4fd944:33fdf604-2086-4df5-8673-5b45d81a0588:REDIS_URL",
+            "name": "REDIS_URL",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f346a50d-96b3-4176-8a95-db47ac4fd944",
+            "value": "redis://:3da7012daf5bb796b45f257c33c382f18b2c747d4f9bb248@redis.railway.internal:6379"
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.redis"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable_collection",
+      "name": "crm_api_vars",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "f783e630-2266-40d5-83d2-024fdb686680:33fdf604-2086-4df5-8673-5b45d81a0588:AUTH_MICROSOFT_ENABLED:AUTH_PASSWORD_ENABLED:CALENDAR_PROVIDER_MICROSOFT_ENABLED:DATABASE_URL:EMAIL_DRIVER:EMAIL_FROM_ADDRESS:EMAIL_FROM_NAME:EMAIL_SMTP_HOST:EMAIL_SMTP_PORT:EMAIL_SMTP_USER:EMAIL_SYSTEM_ADDRESS:FRONTEND_URL:FRONT_BASE_URL:FULLENRICH_BASE_URL:IS_EMAIL_VERIFICATION_REQUIRED:IS_FDW_ENABLED:MESSAGING_PROVIDER_MICROSOFT_ENABLED:MICROSOFT_TENANT_ID:NODE_ENV:PG_DATABASE_URL:PORT:REACT_APP_SERVER_BASE_URL:REDIS_URL:SERVER_URL:SIGN_IN_PREFILLED:STORAGE_TYPE:TEMPORAL_BACKEND_BASE_URL:UNIPILE_BASE_URL",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "f783e630-2266-40d5-83d2-024fdb686680",
+            "variables": [
+              {
+                "name": "DATABASE_URL",
+                "value": "postgresql://postgres:3HhDZXWijsgUAnUIIjytKvMvq%2FjWTBYq@postgres-8f68.railway.internal:5432/postgres"
+              },
+              {
+                "name": "PG_DATABASE_URL",
+                "value": "postgresql://postgres:3HhDZXWijsgUAnUIIjytKvMvq%2FjWTBYq@postgres-8f68.railway.internal:5432/postgres"
+              },
+              {
+                "name": "REDIS_URL",
+                "value": "redis://:3da7012daf5bb796b45f257c33c382f18b2c747d4f9bb248@redis.railway.internal:6379"
+              },
+              {
+                "name": "NODE_ENV",
+                "value": "production"
+              },
+              {
+                "name": "PORT",
+                "value": "3000"
+              },
+              {
+                "name": "SERVER_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "FRONT_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "FRONTEND_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "REACT_APP_SERVER_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "TEMPORAL_BACKEND_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "STORAGE_TYPE",
+                "value": "local"
+              },
+              {
+                "name": "IS_FDW_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "AUTH_PASSWORD_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "SIGN_IN_PREFILLED",
+                "value": "true"
+              },
+              {
+                "name": "IS_EMAIL_VERIFICATION_REQUIRED",
+                "value": "false"
+              },
+              {
+                "name": "AUTH_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "MICROSOFT_TENANT_ID",
+                "value": "479a58aa-145f-4e76-97a5-515e763b24f8"
+              },
+              {
+                "name": "MESSAGING_PROVIDER_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "CALENDAR_PROVIDER_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "EMAIL_DRIVER",
+                "value": "smtp"
+              },
+              {
+                "name": "EMAIL_FROM_ADDRESS",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "EMAIL_FROM_NAME",
+                "value": "CRM Symbiose"
+              },
+              {
+                "name": "EMAIL_SYSTEM_ADDRESS",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "EMAIL_SMTP_HOST",
+                "value": "smtp.gmail.com"
+              },
+              {
+                "name": "EMAIL_SMTP_PORT",
+                "value": "587"
+              },
+              {
+                "name": "EMAIL_SMTP_USER",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "UNIPILE_BASE_URL",
+                "value": "https://api37.unipile.com:16755"
+              },
+              {
+                "name": "FULLENRICH_BASE_URL",
+                "value": "https://app.fullenrich.com/api/v2"
+              }
+            ]
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 0,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 1,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 2,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 3,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 4,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 5,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 6,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 7,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 8,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 9,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 10,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 11,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 12,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 13,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 14,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 15,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 16,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 17,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 18,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 19,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 20,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 21,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 22,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 23,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 24,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 25,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 26,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 27,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.crm_api"
+          ]
+        }
+      ]
+    },
+    {
+      "mode": "managed",
+      "type": "railway_variable_collection",
+      "name": "crm_worker_vars",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "environment_id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+            "id": "5326be2b-c9a3-450a-ae45-173c95416842:33fdf604-2086-4df5-8673-5b45d81a0588:AUTH_MICROSOFT_ENABLED:AUTH_PASSWORD_ENABLED:CALENDAR_PROVIDER_MICROSOFT_ENABLED:DATABASE_URL:DISABLE_CRON_JOBS_REGISTRATION:DISABLE_DB_MIGRATIONS:EMAIL_DRIVER:EMAIL_FROM_ADDRESS:EMAIL_FROM_NAME:EMAIL_SMTP_HOST:EMAIL_SMTP_PORT:EMAIL_SMTP_USER:EMAIL_SYSTEM_ADDRESS:FRONTEND_URL:FRONT_BASE_URL:FULLENRICH_BASE_URL:IS_EMAIL_VERIFICATION_REQUIRED:IS_FDW_ENABLED:MESSAGING_PROVIDER_MICROSOFT_ENABLED:MICROSOFT_TENANT_ID:NODE_ENV:PG_DATABASE_URL:PORT:REACT_APP_SERVER_BASE_URL:REDIS_URL:SERVER_URL:SIGN_IN_PREFILLED:STORAGE_TYPE:TEMPORAL_BACKEND_BASE_URL:UNIPILE_BASE_URL",
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "service_id": "5326be2b-c9a3-450a-ae45-173c95416842",
+            "variables": [
+              {
+                "name": "DATABASE_URL",
+                "value": "postgresql://postgres:3HhDZXWijsgUAnUIIjytKvMvq%2FjWTBYq@postgres-8f68.railway.internal:5432/postgres"
+              },
+              {
+                "name": "PG_DATABASE_URL",
+                "value": "postgresql://postgres:3HhDZXWijsgUAnUIIjytKvMvq%2FjWTBYq@postgres-8f68.railway.internal:5432/postgres"
+              },
+              {
+                "name": "REDIS_URL",
+                "value": "redis://:3da7012daf5bb796b45f257c33c382f18b2c747d4f9bb248@redis.railway.internal:6379"
+              },
+              {
+                "name": "NODE_ENV",
+                "value": "production"
+              },
+              {
+                "name": "PORT",
+                "value": "3000"
+              },
+              {
+                "name": "SERVER_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "FRONT_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "FRONTEND_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "REACT_APP_SERVER_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "TEMPORAL_BACKEND_BASE_URL",
+                "value": "https://crmt-twenty.up.railway.app"
+              },
+              {
+                "name": "STORAGE_TYPE",
+                "value": "local"
+              },
+              {
+                "name": "IS_FDW_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "AUTH_PASSWORD_ENABLED",
+                "value": "true"
+              },
+              {
+                "name": "SIGN_IN_PREFILLED",
+                "value": "true"
+              },
+              {
+                "name": "IS_EMAIL_VERIFICATION_REQUIRED",
+                "value": "false"
+              },
+              {
+                "name": "AUTH_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "MICROSOFT_TENANT_ID",
+                "value": "479a58aa-145f-4e76-97a5-515e763b24f8"
+              },
+              {
+                "name": "MESSAGING_PROVIDER_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "CALENDAR_PROVIDER_MICROSOFT_ENABLED",
+                "value": "false"
+              },
+              {
+                "name": "EMAIL_DRIVER",
+                "value": "smtp"
+              },
+              {
+                "name": "EMAIL_FROM_ADDRESS",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "EMAIL_FROM_NAME",
+                "value": "CRM Symbiose"
+              },
+              {
+                "name": "EMAIL_SYSTEM_ADDRESS",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "EMAIL_SMTP_HOST",
+                "value": "smtp.gmail.com"
+              },
+              {
+                "name": "EMAIL_SMTP_PORT",
+                "value": "587"
+              },
+              {
+                "name": "EMAIL_SMTP_USER",
+                "value": "jorge6242@gmail.com"
+              },
+              {
+                "name": "UNIPILE_BASE_URL",
+                "value": "https://api37.unipile.com:16755"
+              },
+              {
+                "name": "FULLENRICH_BASE_URL",
+                "value": "https://app.fullenrich.com/api/v2"
+              },
+              {
+                "name": "DISABLE_DB_MIGRATIONS",
+                "value": "true"
+              },
+              {
+                "name": "DISABLE_CRON_JOBS_REGISTRATION",
+                "value": "true"
+              }
+            ]
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 0,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 1,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 2,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 3,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 4,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 5,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 6,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 7,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 8,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 9,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 10,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 11,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 12,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 13,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 14,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 15,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 16,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 17,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 18,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 19,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 20,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 21,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 22,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 23,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 24,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 25,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 26,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 27,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 28,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ],
+            [
+              {
+                "type": "get_attr",
+                "value": "variables"
+              },
+              {
+                "type": "index",
+                "value": {
+                  "value": 29,
+                  "type": "number"
+                }
+              },
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ],
+          "dependencies": [
+            "railway_service.crm_worker"
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

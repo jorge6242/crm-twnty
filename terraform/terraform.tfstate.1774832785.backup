@@ -1,0 +1,34 @@
+{
+  "version": 4,
+  "terraform_version": "1.11.4",
+  "serial": 2,
+  "lineage": "19c74624-13db-70da-cafc-9dca95ebf93c",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "railway_project",
+      "name": "crm_symbiose",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "default_environment": {
+              "id": "33fdf604-2086-4df5-8673-5b45d81a0588",
+              "name": "production"
+            },
+            "description": "",
+            "has_pr_deploys": false,
+            "id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "name": "crmt-twenty",
+            "private": true,
+            "team_id": null
+          },
+          "sensitive_attributes": []
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

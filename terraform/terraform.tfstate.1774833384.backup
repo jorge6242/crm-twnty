@@ -1,0 +1,45 @@
+{
+  "version": 4,
+  "terraform_version": "1.11.4",
+  "serial": 25,
+  "lineage": "19c74624-13db-70da-cafc-9dca95ebf93c",
+  "outputs": {},
+  "resources": [
+    {
+      "mode": "managed",
+      "type": "railway_service",
+      "name": "postgres",
+      "provider": "provider[\"registry.terraform.io/terraform-community-providers/railway\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "config_path": null,
+            "cron_schedule": null,
+            "id": "8d4df3ff-f7ca-421e-b2fc-bffaf7d238f4",
+            "name": "Postgres-8f80e74b-9bd5-4fa7-bd4e-ab8090248c64",
+            "num_replicas": 1,
+            "project_id": "43cdc4c7-2119-4dc5-8168-e49510e330a1",
+            "region": "us-west1",
+            "root_directory": null,
+            "source_image": "ghcr.io/railwayapp-templates/postgres-ssl:18",
+            "source_image_registry_password": null,
+            "source_image_registry_username": null,
+            "source_repo": null,
+            "source_repo_branch": null,
+            "volume": null
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "source_image_registry_password"
+              }
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "check_results": null
+}

@@ -1,0 +1,38 @@
+# terraform.tfvars.example — copia esto a terraform.tfvars y completa los valores
+# terraform.tfvars está en .gitignore y NUNCA se commitea
+
+# Dominio público generado por Railway para el servicio CRM
+# Lo obtienes después de crear el servicio y habilitar el dominio público
+public_domain = "tu-servicio-production-xxxx.up.railway.app"
+
+# Configuración general
+node_env = "production"
+port     = "3000"
+
+# Storage
+storage_type   = "local"
+is_fdw_enabled = "false"
+
+# Autenticación
+auth_password_enabled          = "true"
+sign_in_prefilled              = "true"
+is_email_verification_required = "false"
+
+# Microsoft OAuth (desactivado hasta configurar Azure App Registration)
+auth_microsoft_enabled               = "false"
+microsoft_tenant_id                  = ""
+messaging_provider_microsoft_enabled = "false"
+calendar_provider_microsoft_enabled  = "false"
+
+# Email — configuración pública (la password va en Railway Shared Variables)
+email_driver         = "smtp"
+email_from_address   = "tu-email@gmail.com"
+email_from_name      = "CRM Symbiose"
+email_system_address = "tu-email@gmail.com"
+email_smtp_host      = "smtp.gmail.com"
+email_smtp_port      = "587"
+email_smtp_user      = "tu-email@gmail.com"
+
+# Integraciones — URLs públicas (las API keys van en Railway Shared Variables)
+unipile_base_url    = "https://api37.unipile.com:16755"
+fullenrich_base_url = "https://app.fullenrich.com/api/v2"

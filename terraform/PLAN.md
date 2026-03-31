@@ -21,6 +21,33 @@ Esta sección documenta la configuración real de cada servicio en el proyecto `
 
 ---
 
+### Registry de imágenes — Personal vs Trabajo
+
+El origen de la imagen Docker varía según el contexto. Esto afecta `source_image` en `services.tf` y las credenciales en Railway Shared Variables.
+
+| Contexto | Registry | Imagen | Credenciales Railway |
+|----------|----------|--------|----------------------|
+| **Repo personal** (`jorge6242/crm-twnty`) | Docker Hub | `jgomez6242/symbiosecrm:latest` | `RAILWAY_REGISTRY_AUTH_DOCKERHUB_USERNAME` + `RAILWAY_REGISTRY_AUTH_DOCKERHUB_PASSWORD` |
+| **Repo trabajo** (`SymbioseM/SymbioseCRM`) | GHCR | `ghcr.io/symbiosem/symbiosecrm:latest` | `RAILWAY_REGISTRY_AUTH_GITHUB_USERNAME` + `RAILWAY_REGISTRY_AUTH_GITHUB_PASSWORD` (GitHub PAT con `read:packages`) |
+
+**Al replicar en el repo de trabajo**, cambiar en `services.tf`:
+```hcl
+# Repo personal (Docker Hub)
+source_image = "jgomez6242/symbiosecrm:latest"
+
+# Repo trabajo (GHCR) — usar esto en producción
+source_image = "ghcr.io/symbiosem/symbiosecrm:latest"
+```
+
+Y las Shared Variables correspondientes:
+```bash
+# Repo trabajo — GHCR
+railway variables set RAILWAY_REGISTRY_AUTH_GITHUB_USERNAME="symbiosem" --environment production
+railway variables set RAILWAY_REGISTRY_AUTH_GITHUB_PASSWORD="ghp_..." --environment production
+```
+
+---
+
 ### Servicio: CRM (API)
 
 | Campo | Valor |
@@ -139,33 +166,86 @@ terraform/
 
 ### Fase 1 — Fundación y Validación del Provider
 
-**Objetivo:** Validar qué recursos y atributos soporta el provider `terraform-community/railway ~> 0.2.0`, y dejar la estructura limpia.
+**Objetivo:** Validar qué recursos y atributos soporta el provider, y dejar la estructura limpia.
 
 **Tareas:**
-- [ ] Consultar documentación del provider via Context7 — recursos disponibles, atributos de `railway_service`, cómo se referencian variables entre servicios
-- [ ] Confirmar sintaxis correcta para: restart policy, region, registry credentials, volúmenes
-- [ ] Confirmar si el provider expone connection strings de Postgres/Redis como outputs o si deben usarse Railway variable references (`${{Postgres.DATABASE_URL}}`)
-- [ ] Crear `.gitignore` en `terraform/`
-- [ ] Crear `terraform.tfvars.example` con todos los valores necesarios
-- [ ] Limpiar `main.tf` — dejar solo provider config, mover recursos a archivos separados
+- [x] Consultar documentación del provider via Context7
+- [x] Confirmar sintaxis correcta para recursos disponibles
+- [x] Crear `.gitignore` en `terraform/`
+- [x] Crear `terraform.tfvars.example` con todos los valores necesarios
+- [x] Limpiar `main.tf` — dejar solo provider config, mover recursos a archivos separados
 
-**Resultado:** `terraform init` exitoso, estructura de archivos lista.
+**Resultado:** `terraform init` exitoso con provider `v0.4.6`, estructura de archivos lista.
+
+#### Hallazgos críticos del provider `terraform-community-providers/railway ~> 0.4.0`
+
+> Estos hallazgos son esenciales para replicar en el repo original sin repetir los mismos errores.
+
+**1. Namespace correcto del provider**
+El namespace en la documentación es `terraform-community/railway` pero el correcto en el registry es `terraform-community-providers/railway`. Usar el incorrecto da error en `terraform init`.
+
+**2. El provider NO soporta crear proyectos en cuentas personales**
+`railway_project` con `team_id` falla con `Workspace not found` en cuentas personales de Railway. El campo `team_id` es para organizaciones/equipos, no para cuentas personales.
+
+**Solución:** Crear el proyecto manualmente en Railway dashboard y referenciarlo por ID usando `locals` en `project.tf`:
+```hcl
+locals {
+  project_id     = "ID_DEL_PROYECTO"
+  environment_id = "ID_DEL_AMBIENTE"
+}
+```
+
+**3. El provider tiene soporte limitado — solo gestiona:**
+- `railway_service` (nombre + imagen + project_id)
+- `railway_variable` (una variable por recurso)
+- `railway_variable_collection` (batch de variables)
+- `railway_tcp_proxy` (acceso TCP externo)
+- `railway_service_domain` (dominio público)
+
+**No soporta:** start commands, restart policy, volúmenes, healthcheck, pre-deploy commands, región específica, registry credentials privadas.
+
+**4. Bug del provider con `railway_variable` cuando `environment_id` es un `local`**
+El provider reporta error `unknown value after apply` para `.id` y `.project_id` aunque la variable SÍ se crea en Railway. Es un bug del provider, no un fallo real. La variable queda en el state y en Railway correctamente.
+
+**5. El RAILWAY_TOKEN para Terraform debe ser el token de sesión del CLI**
+Los API tokens creados en el dashboard de Railway con scope de workspace personal dan error `Workspace not found`. El token de sesión del CLI (`~/.railway/config.json → accessToken`) sí funciona. Para uso en CI/CD (Fase 5B), usar el token de sesión o investigar el tipo correcto de token para organizaciones.
 
 ---
 
 ### Fase 2 — Proyecto y Bases de Datos
 
-**Objetivo:** Crear `railway_project` + Postgres + Redis con toda su configuración real.
+**Objetivo:** Crear Postgres + Redis con configuración mínima funcional vía Terraform + pasos manuales post-apply.
 
 **Tareas:**
-- [ ] Crear `project.tf` con `railway_project "crm_symbiose"`
-- [ ] Crear `databases.tf`:
-  - **Postgres:** imagen `ghcr.io/railwayapp-templates/postgres-ssl:18`, sin start command, volumen, restart on failure / max 10, región US West
-  - **Redis:** imagen `redis:8.2.1`, start command con `noeviction`, volumen, restart on failure / max 10, región US West
-- [ ] Verificar que `terraform plan` no genera errores
-- [ ] Verificar que `terraform apply` crea ambos en el dashboard de Railway
+- [x] Crear `project.tf` con locals (project_id + environment_id)
+- [x] Crear `databases.tf` con Postgres, Redis y TCP proxies
+- [x] Agregar `POSTGRES_PASSWORD` y `PGDATA` como `railway_variable`
+- [x] Verificar que `terraform plan` y `terraform apply` no generan errores
 
-**Resultado:** Proyecto Railway con Postgres y Redis funcionales, creados por Terraform.
+**Pasos manuales post-apply (Railway Dashboard — una sola vez):**
+- [x] Postgres: agregar volumen → mount path `/var/lib/postgresql/data`
+- [x] Redis: agregar volumen → mount path `/data`
+- [x] Redis: start command → `redis-server --requirepass $REDIS_PASSWORD --maxmemory-policy noeviction --save 60 1`
+- [x] Redis: agregar variable `REDIS_PASSWORD` en Variables
+
+**Resultado:** Postgres y Redis Online, con volúmenes persistentes y Redis con `noeviction`.
+
+#### Hallazgos críticos de Fase 2
+
+**1. La imagen `postgres-ssl:18` requiere `POSTGRES_PASSWORD` y `PGDATA`**
+Sin `POSTGRES_PASSWORD` el contenedor crashea inmediatamente. Sin `PGDATA` apuntando al mount path del volumen, la imagen falla con `volume not mounted to correct path`. Ambas variables deben estar en Terraform desde el primer apply.
+
+**2. El volumen de Postgres debe montarse en `/var/lib/postgresql/data`**
+El mount path es crítico — la imagen valida que el volumen esté en ese path exacto.
+
+**3. El start command de Redis con `--dir` falla en Railway**
+Railway inyecta módulos adicionales (`--loadmodule`) en el config de Redis que colisionan con el flag `--dir`. El start command simplificado sin `--dir` funciona correctamente:
+```
+redis-server --requirepass $REDIS_PASSWORD --maxmemory-policy noeviction --save 60 1
+```
+
+**4. El hostname privado puede quedar con sufijo si hay conflicto de nombres**
+Si un servicio anterior con el mismo nombre fue eliminado recientemente, Railway puede asignar `postgres-XXXX.railway.internal` en lugar de `postgres.railway.internal`. Verificar y corregir manualmente en Settings → Networking si es necesario.
 
 ---
 
