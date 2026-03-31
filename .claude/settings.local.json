@@ -9,7 +9,13 @@
       "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway whoami)",
       "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway status)",
       "Bash(RAILWAY_TOKEN=\"7300cd50-a32c-4762-879f-49c36eb5b8c1\" railway up --service c4db3a77-e5e2-4c09-be74-72f55d309d1b)",
-      "Bash(yarn install:*)"
+      "Bash(yarn install:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(brew list:*)",
+      "Read(//opt/homebrew/Cellar/terraform/1.11.4/bin/**)",
+      "Read(//usr/local/bin/**)",
+      "Bash(/opt/homebrew/bin/terraform state:*)"
     ]
   }
 }
