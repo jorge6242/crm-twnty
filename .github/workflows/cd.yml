@@ -15,12 +15,14 @@ env:
 jobs:
   # ──────────────────────────────────────────────
   # Job 0: Ensure infrastructure exists via Terraform
-  # Idempotent — si los servicios ya existen, 0 cambios
-  # Si fueron borrados accidentalmente, los recrea
+  # Passes current service IDs as outputs — always up to date
   # ──────────────────────────────────────────────
   ensure-infrastructure:
     name: Ensure Infrastructure
     runs-on: ubuntu-latest
+    outputs:
+      api_service_id: ${{ steps.tf-output.outputs.api_service_id }}
+      worker_service_id: ${{ steps.tf-output.outputs.worker_service_id }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,6 +30,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           cli_config_credentials_token: ${{ secrets.TF_API_TOKEN }}
+          terraform_wrapper: false
 
       - name: Terraform Init
         working-directory: terraform
@@ -41,6 +44,13 @@ jobs:
             terraform state rm railway_service_domain.crm_api 2>/dev/null || true
             terraform apply -auto-approve
           fi
+
+      - name: Get service IDs from Terraform output
+        id: tf-output
+        working-directory: terraform
+        run: |
+          echo "api_service_id=$(terraform output -raw api_service_id)" >> $GITHUB_OUTPUT
+          echo "worker_service_id=$(terraform output -raw worker_service_id)" >> $GITHUB_OUTPUT
 
   # ──────────────────────────────────────────────
   # Job 1: Build Docker image once, push to GHCR
@@ -90,7 +100,7 @@ jobs:
 
   # ──────────────────────────────────────────────
   # Job 2: Deploy API and Worker in parallel
-  # Both services pull the same image from GHCR
+  # Uses service IDs from Terraform output — never stale
   # ──────────────────────────────────────────────
   deploy-api:
     name: Deploy API Service
@@ -99,14 +109,14 @@ jobs:
     steps:
       - name: Trigger API redeploy via Railway API
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+          BODY=$(curl -s \
             --request POST \
             --header "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
             --header "Content-Type: application/json" \
-            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ secrets.RAILWAY_API_SERVICE_ID }}\") }"}' \
+            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ needs.ensure-infrastructure.outputs.api_service_id }}\") }"}' \
             https://backboard.railway.app/graphql/v2)
-          echo "Railway API response: HTTP $RESPONSE"
-          [ "$RESPONSE" = "200" ] || exit 1
+          echo "Response: $BODY"
+          echo "$BODY" | grep -q '"errors"' && echo "Railway API returned errors" && exit 1 || true
 
   deploy-worker:
     name: Deploy Worker Service
@@ -115,14 +125,14 @@ jobs:
     steps:
       - name: Trigger Worker redeploy via Railway API
         run: |
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+          BODY=$(curl -s \
             --request POST \
             --header "Authorization: Bearer ${{ secrets.RAILWAY_TOKEN }}" \
             --header "Content-Type: application/json" \
-            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ secrets.RAILWAY_WORKER_SERVICE_ID }}\") }"}' \
+            --data '{"query":"mutation { serviceInstanceRedeploy(environmentId: \"${{ secrets.RAILWAY_ENVIRONMENT_ID }}\", serviceId: \"${{ needs.ensure-infrastructure.outputs.worker_service_id }}\") }"}' \
             https://backboard.railway.app/graphql/v2)
-          echo "Railway API response: HTTP $RESPONSE"
-          [ "$RESPONSE" = "200" ] || exit 1
+          echo "Response: $BODY"
+          echo "$BODY" | grep -q '"errors"' && echo "Railway API returned errors" && exit 1 || true
 
   # ──────────────────────────────────────────────
   # Job 3: Verify deployment health
